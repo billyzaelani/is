@@ -17,6 +17,7 @@ func New(t T) *Is {
 
 // Equal asserts that a and b are equal.
 func (is *Is) Equal(a, b interface{}) {
+	is.t.Helper()
 	if reflect.DeepEqual(a, b) {
 		return
 	}
