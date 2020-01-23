@@ -1,6 +1,7 @@
 package is
 
 import (
+	"fmt"
 	"reflect"
 )
 
@@ -20,7 +21,31 @@ func (is *Is) Equal(a, b interface{}) {
 		return
 	}
 
-	is.t.Errorf("%v != %v", a, b)
+	if isNil(a) || isNil(b) {
+		is.t.Errorf("%s != %s", valWithType(a), valWithType(b))
+		return
+	}
+
+	if reflect.ValueOf(a).Type() == reflect.ValueOf(b).Type() {
+		is.t.Errorf("%v != %v", a, b)
+		return
+	}
+
+	is.t.Errorf("%s != %s", valWithType(a), valWithType(b))
+}
+
+func valWithType(v interface{}) string {
+	if isNil(v) {
+		return "<nil>"
+	}
+	return fmt.Sprintf("%[1]T(%[1]v)", v)
+}
+
+func isNil(obj interface{}) bool {
+	if obj == nil {
+		return true
+	}
+	return false
 }
 
 // T is the interface common to testing type.

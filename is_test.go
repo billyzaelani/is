@@ -44,6 +44,40 @@ func TestEqual(t *testing.T) {
 			Got:  func(is *Is) { is.Equal(1, 2) },
 			Want: `1 != 2`,
 		},
+		{
+			Name: "both nil",
+			Got:  func(is *Is) { is.Equal(nil, nil) },
+			Want: ``,
+		},
+		{
+			Name: "different data type",
+			Got:  func(is *Is) { is.Equal(3, false) },
+			Want: `int(3) != bool(false)`,
+		},
+		{
+			Name: "specific integer",
+			Got:  func(is *Is) { is.Equal(int32(1), int64(2)) },
+			Want: `int32(1) != int64(2)`,
+		},
+		{
+			Name: "with nil",
+			Got:  func(is *Is) { is.Equal(nil, "nil") },
+			Want: `<nil> != string(nil)`,
+		},
+		{
+			Name: "nil slice",
+			Got: func(is *Is) {
+				var a []string
+				b := []string{"one", "two"}
+				is.Equal(a, b)
+			},
+			Want: `[] != [one two]`,
+		},
+		{
+			Name: "nil with slice",
+			Got:  func(is *Is) { is.Equal(nil, []string{"one", "two"}) },
+			Want: `<nil> != []string([one two])`,
+		},
 	}
 
 	for _, tt := range tests {
