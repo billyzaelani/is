@@ -49,6 +49,13 @@ func isNil(obj interface{}) bool {
 	return false
 }
 
+// NoErr assert that err is nil.
+func (is *Is) NoErr(err error) {
+	if err != nil {
+		is.t.Errorf("err: %s", err.Error())
+	}
+}
+
 // T is the interface common to testing type.
 type T interface {
 	Error(args ...interface{})

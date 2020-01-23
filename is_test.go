@@ -1,6 +1,7 @@
 package is
 
 import (
+	"errors"
 	"fmt"
 	"testing"
 )
@@ -77,6 +78,42 @@ func TestEqual(t *testing.T) {
 			Name: "nil with slice",
 			Got:  func(is *Is) { is.Equal(nil, []string{"one", "two"}) },
 			Want: `<nil> != []string([one two])`,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.Name, func(t *testing.T) {
+			m := &mockT{}
+			is := New(m)
+			tt.Got(is)
+			got := m.out()
+			want := tt.Want
+
+			if got != want {
+				t.Errorf("%q != %q", got, want)
+			}
+		})
+	}
+}
+
+func TestNoErr(t *testing.T) {
+	tests := []struct {
+		Name string
+		Got  func(is *Is)
+		Want string
+	}{
+		{
+			Name: "no error",
+			Got: func(is *Is) {
+				var err error
+				is.NoErr(err)
+			},
+			Want: ``,
+		},
+		{
+			Name: "error",
+			Got:  func(is *Is) { is.NoErr(errors.New("something's wrong")) },
+			Want: `err: something's wrong`,
 		},
 	}
 
