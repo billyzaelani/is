@@ -2,6 +2,7 @@ package is
 
 import (
 	"fmt"
+	"testing"
 )
 
 type mockT struct {
@@ -26,3 +27,36 @@ func (m *mockT) Skipf(format string, args ...interface{})  { m.Logf(format, args
 func (m *mockT) Skipped() bool                             { return m.skip }
 func (m *mockT) Helper()                                   {}
 func (m *mockT) out() string                               { return m.s }
+
+func TestEqual(t *testing.T) {
+	tests := []struct {
+		Name string
+		Got  func(is *Is)
+		Want string
+	}{
+		{
+			Name: "equal",
+			Got:  func(is *Is) { is.Equal(1, 1) },
+			Want: ``,
+		},
+		{
+			Name: "not equal",
+			Got:  func(is *Is) { is.Equal(1, 2) },
+			Want: `1 != 2`,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.Name, func(t *testing.T) {
+			m := &mockT{}
+			is := New(m)
+			tt.Got(is)
+			got := m.out()
+			want := tt.Want
+
+			if got != want {
+				t.Errorf("%q != %q", got, want)
+			}
+		})
+	}
+}
