@@ -2,17 +2,22 @@ package is
 
 import (
 	"fmt"
+	"go/parser"
+	"go/token"
 	"reflect"
+	"runtime"
+	"strings"
 )
 
 // Is is the test helper.
 type Is struct {
-	t T
+	t        T
+	comments map[int]string // k:line, v:comment
 }
 
 // New makes a new test helper.
 func New(t T) *Is {
-	return &Is{t}
+	return &Is{t: t}
 }
 
 // Equal asserts that a and b are equal.
@@ -23,16 +28,24 @@ func (is *Is) Equal(a, b interface{}) {
 	}
 
 	if isNil(a) || isNil(b) {
-		is.t.Errorf("%s != %s", valWithType(a), valWithType(b))
+		is.logf("%s != %s", valWithType(a), valWithType(b))
 		return
 	}
 
 	if reflect.ValueOf(a).Type() == reflect.ValueOf(b).Type() {
-		is.t.Errorf("%v != %v", a, b)
+		is.logf("%v != %v", a, b)
 		return
 	}
 
-	is.t.Errorf("%s != %s", valWithType(a), valWithType(b))
+	is.logf("%s != %s", valWithType(a), valWithType(b))
+}
+
+func (is *Is) logf(format string, args ...interface{}) {
+	msg := []string{fmt.Sprintf(format, args...)}
+	if comment := is.loadComment(); comment != "" {
+		msg = append(msg, comment)
+	}
+	is.t.Error(strings.Join(msg, " "))
 }
 
 func valWithType(v interface{}) string {
@@ -49,10 +62,30 @@ func isNil(obj interface{}) bool {
 	return false
 }
 
+func (is *Is) loadComment() string {
+	_, filename, line, _ := runtime.Caller(3) // level of function call to the actual test
+	if is.comments == nil {
+		is.comments = make(map[int]string)
+		fset := token.NewFileSet()
+		f, err := parser.ParseFile(fset, filename, nil, parser.ParseComments)
+		if err != nil {
+			panic(err)
+		}
+
+		for _, s := range f.Comments {
+			line := fset.Position(s.Pos()).Line
+			is.comments[line] = "// " + strings.TrimSpace(s.Text())
+		}
+	}
+
+	return is.comments[line]
+}
+
 // NoErr assert that err is nil.
 func (is *Is) NoErr(err error) {
+	is.t.Helper()
 	if err != nil {
-		is.t.Errorf("err: %s", err.Error())
+		is.logf("err: %s", err.Error())
 	}
 }
 

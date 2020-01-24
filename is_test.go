@@ -79,6 +79,13 @@ func TestEqual(t *testing.T) {
 			Got:  func(is *Is) { is.Equal(nil, []string{"one", "two"}) },
 			Want: `<nil> != []string([one two])`,
 		},
+		{
+			Name: "with comment",
+			Got: func(is *Is) {
+				is.Equal("foo", "bar") // foo is not bar
+			},
+			Want: "foo != bar // foo is not bar",
+		},
 	}
 
 	for _, tt := range tests {
@@ -114,6 +121,13 @@ func TestNoErr(t *testing.T) {
 			Name: "error",
 			Got:  func(is *Is) { is.NoErr(errors.New("something's wrong")) },
 			Want: `err: something's wrong`,
+		},
+		{
+			Name: "error with comment",
+			Got: func(is *Is) {
+				is.NoErr(errors.New("something's wrong")) // shouldn't be error
+			},
+			Want: `err: something's wrong // shouldn't be error`,
 		},
 	}
 
