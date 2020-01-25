@@ -2,7 +2,9 @@ package is
 
 import (
 	"fmt"
+	"go/ast"
 	"go/parser"
+	"go/printer"
 	"go/token"
 	"reflect"
 	"runtime"
@@ -11,8 +13,9 @@ import (
 
 // Is is the test helper.
 type Is struct {
-	t        T
-	comments map[int]string // k:line, v:comment
+	t         T
+	comments  map[int]string // k:line, v:comment
+	arguments map[int]string // k:line, v:argument
 }
 
 // New makes a new test helper.
@@ -87,6 +90,45 @@ func (is *Is) NoErr(err error) {
 	if err != nil {
 		is.logf("err: %s", err.Error())
 	}
+}
+
+// True asserts that expression is true.
+// The expression code itself will be reported if the assertion fails.
+func (is *Is) True(expression bool) {
+	if expression {
+		return
+	}
+
+	args := is.loadArgument("True")
+	is.logf("false: %s", args)
+}
+
+func (is *Is) loadArgument(funcName string) string {
+	_, filename, line, _ := runtime.Caller(2) // level of function call to the actual test
+	if is.arguments == nil {
+		is.arguments = make(map[int]string)
+		fset := token.NewFileSet()
+		f, err := parser.ParseFile(fset, filename, nil, parser.AllErrors)
+		if err != nil {
+			panic(err)
+		}
+		ast.Inspect(f, func(n ast.Node) bool {
+			ret, ok := n.(*ast.CallExpr)
+			if ok {
+				var str strings.Builder
+				printer.Fprint(&str, fset, ret)
+				if expr := str.String(); strings.Contains(expr, funcName) {
+					line := fset.Position(ret.Pos()).Line
+					args := strings.ReplaceAll(expr, "\n\t", " ")
+					args = args[ret.Lparen-ret.Pos()+1 : len(args)-1]
+					is.arguments[line] = args
+				}
+			}
+			return true
+		})
+	}
+
+	return is.arguments[line]
 }
 
 // T is the interface common to testing type.

@@ -145,3 +145,82 @@ func TestNoErr(t *testing.T) {
 		})
 	}
 }
+
+func TestTrue(t *testing.T) {
+	tests := []struct {
+		Name string
+		Got  func(is *Is)
+		Want string
+	}{
+		{
+			Name: "true",
+			Got: func(is *Is) {
+				is.True(1 == 1) // true
+			},
+			Want: ``,
+		},
+		{
+			Name: "false",
+			Got: func(is *Is) {
+				is.True(1 == 2) // comment
+			},
+			Want: `false: 1 == 2 // comment`,
+		},
+		{
+			Name: "extra parentheses",
+			Got: func(is *Is) {
+				is.True((1 == 2)) // comment
+			},
+			Want: `false: (1 == 2) // comment`,
+		},
+		{
+			Name: "new line",
+			Got: func(is *Is) {
+				is.True((1 == 2) &&
+					false)
+			},
+			Want: `false: (1 == 2) && false`,
+		},
+		{
+			Name: "multi line",
+			Got: func(is *Is) {
+				is.True((1 == 2) &&
+					false ||
+					false)
+			},
+			Want: `false: (1 == 2) && false || false`,
+		},
+		{
+			Name: "multi line with comment in first line",
+			Got: func(is *Is) {
+				is.True((1 == 2) && // comment
+					false ||
+					false)
+			},
+			Want: `false: (1 == 2) && false || false // comment`,
+		},
+		{
+			Name: "multi line with comment in non-first line",
+			Got: func(is *Is) {
+				is.True((1 == 2) &&
+					false || // cannot be printed
+					false)
+			},
+			Want: `false: (1 == 2) && false || false`,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.Name, func(t *testing.T) {
+			m := &mockT{}
+			is := New(m)
+			tt.Got(is)
+			got := m.out()
+			want := tt.Want
+
+			if got != want {
+				t.Errorf("%q != %q", got, want)
+			}
+		})
+	}
+}
