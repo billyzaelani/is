@@ -49,7 +49,7 @@ func New(t T) *Is {
 //
 // Will output:
 //
-// 		wassup world := hello world // greeting the world
+// 		wassup world != hello world // greeting the world
 func (is *Is) Equal(a, b interface{}) {
 	is.t.Helper()
 	if reflect.DeepEqual(a, b) {
