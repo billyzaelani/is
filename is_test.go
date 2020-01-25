@@ -7,9 +7,10 @@ import (
 )
 
 type mockT struct {
-	fail bool
-	skip bool
-	s    string
+	fail        bool
+	skip        bool
+	s           string
+	helperCount int
 }
 
 func (m *mockT) Error(args ...interface{})                 { m.Log(args...); m.Fail() }
@@ -26,7 +27,7 @@ func (m *mockT) Skip(args ...interface{})                  { m.Log(args...); m.S
 func (m *mockT) SkipNow()                                  { m.skip = true }
 func (m *mockT) Skipf(format string, args ...interface{})  { m.Logf(format, args...); m.SkipNow() }
 func (m *mockT) Skipped() bool                             { return m.skip }
-func (m *mockT) Helper()                                   {}
+func (m *mockT) Helper()                                   { m.helperCount++ }
 func (m *mockT) out() string                               { return m.s }
 
 func TestEqual(t *testing.T) {
@@ -220,6 +221,44 @@ func TestTrue(t *testing.T) {
 
 			if got != want {
 				t.Errorf("%q != %q", got, want)
+			}
+		})
+	}
+}
+
+func TestLine(t *testing.T) {
+	tests := []struct {
+		Name string
+		Got  func(is *Is)
+		Want int
+	}{
+		{
+			Name: "Equal",
+			Got:  func(is *Is) { is.Equal(1, 2) },
+			Want: 2,
+		},
+		{
+			Name: "NoErr",
+			Got:  func(is *Is) { is.NoErr(errors.New("something's wrong")) },
+			Want: 2,
+		},
+		{
+			Name: "True",
+			Got:  func(is *Is) { is.True(1 == 2) },
+			Want: 2,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.Name, func(t *testing.T) {
+			m := &mockT{}
+			is := New(m)
+			tt.Got(is)
+			got := m.helperCount
+			want := tt.Want
+
+			if got != want {
+				t.Errorf("%d != %d", got, want)
 			}
 		})
 	}

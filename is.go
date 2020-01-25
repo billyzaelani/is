@@ -44,6 +44,7 @@ func (is *Is) Equal(a, b interface{}) {
 }
 
 func (is *Is) logf(format string, args ...interface{}) {
+	is.t.Helper()
 	msg := []string{fmt.Sprintf(format, args...)}
 	if comment := is.loadComment(); comment != "" {
 		msg = append(msg, comment)
@@ -95,6 +96,7 @@ func (is *Is) NoErr(err error) {
 // True asserts that expression is true.
 // The expression code itself will be reported if the assertion fails.
 func (is *Is) True(expression bool) {
+	is.t.Helper()
 	if expression {
 		return
 	}
