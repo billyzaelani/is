@@ -129,7 +129,7 @@ func TestEqual(t *testing.T) {
 	}
 }
 
-func TestNoErr(t *testing.T) {
+func TestNoError(t *testing.T) {
 	tests := []struct {
 		Name  string
 		State failState
@@ -142,21 +142,21 @@ func TestNoErr(t *testing.T) {
 			Msg:   ``,
 			F: func(is *is.Is) {
 				var err error
-				is.NoErr(err)
+				is.NoError(err)
 			},
 		},
 		{
 			Name:  "error",
 			State: failNow,
-			Msg:   `err: something's wrong`,
-			F:     func(is *is.Is) { is.NoErr(errors.New("something's wrong")) },
+			Msg:   `NoError: "something's wrong"`,
+			F:     func(is *is.Is) { is.NoError(errors.New("something's wrong")) },
 		},
 		{
 			Name:  "error with comment",
 			State: failNow,
-			Msg:   `err: something's wrong // shouldn't be error`,
+			Msg:   `NoError: "something's wrong" // shouldn't be error`,
 			F: func(is *is.Is) {
-				is.NoErr(errors.New("something's wrong")) // shouldn't be error
+				is.NoError(errors.New("something's wrong")) // shouldn't be error
 			},
 		},
 	}
@@ -169,7 +169,7 @@ func TestNoErr(t *testing.T) {
 
 			assertState(t, m.state, tt.State)
 			if m.msg != tt.Msg {
-				t.Errorf("%q != %q", m.msg, tt.Msg)
+				t.Errorf("got: %s, want: %s", m.msg, tt.Msg)
 			}
 		})
 	}
@@ -358,8 +358,8 @@ func TestLine(t *testing.T) {
 			Want: 2,
 		},
 		{
-			Name: "NoErr",
-			F:    func(is *is.Is) { is.NoErr(errors.New("something's wrong")) },
+			Name: "NoError",
+			F:    func(is *is.Is) { is.NoError(errors.New("something's wrong")) },
 			Want: 2,
 		},
 		{

@@ -112,21 +112,21 @@ func (is *Is) loadComment() string {
 	return is.comments[line]
 }
 
-// NoErr assert that err is nil.
+// NoError assert that err is nil.
 //
-// 		func TestNoErr(t *testing.T) {
+// 		func TestNoError(t *testing.T) {
 //			is := is.New(t)
 // 			_, err := findGirlfriend("Anyone?")
-// 			is.NoErr(err) // poor you
+// 			is.NoError(err) // poor you
 // 		}
 //
 // Will output:
 //
-// 		err: girlfriend not found // poor you
-func (is *Is) NoErr(err error) {
+// 		NoError: girlfriend not found // poor you
+func (is *Is) NoError(err error) {
 	is.t.Helper()
 	if err != nil {
-		is.logf(is.t.FailNow, "err: %s", err.Error())
+		is.logf(is.t.FailNow, "NoError: %q", err.Error())
 	}
 }
 
