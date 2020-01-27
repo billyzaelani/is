@@ -7,6 +7,8 @@ import (
 	"testing"
 )
 
+var errWrong = errors.New("something's wrong")
+
 type mockT struct {
 	state       failState
 	msg         string
@@ -149,14 +151,14 @@ func TestNoError(t *testing.T) {
 			Name:  "error",
 			State: failNow,
 			Msg:   `NoError: "something's wrong"`,
-			F:     func(is *is.Is) { is.NoError(errors.New("something's wrong")) },
+			F:     func(is *is.Is) { is.NoError(errWrong) },
 		},
 		{
 			Name:  "error with comment",
 			State: failNow,
 			Msg:   `NoError: "something's wrong" // shouldn't be error`,
 			F: func(is *is.Is) {
-				is.NoError(errors.New("something's wrong")) // shouldn't be error
+				is.NoError(errWrong) // shouldn't be error
 			},
 		},
 	}
@@ -359,7 +361,7 @@ func TestLine(t *testing.T) {
 		},
 		{
 			Name: "NoError",
-			F:    func(is *is.Is) { is.NoError(errors.New("something's wrong")) },
+			F:    func(is *is.Is) { is.NoError(errWrong) },
 			Want: 2,
 		},
 		{
