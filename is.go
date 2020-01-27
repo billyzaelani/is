@@ -12,8 +12,8 @@ The following failing test:
 
 		func TestComment(t *testing.T) {
 			is := is.New(t)
- 			a, b := 1, 2
- 			is.Equal(a, b) // expect to be the same
+			a, b := 1, 2
+			is.Equal(a, b) // expect to be the same
 		}
 
 Will output:
@@ -160,42 +160,18 @@ func (is *Is) loadComment() string {
 }
 
 /*
-NoError assert that err is nil. Upon failing the test,
-is.NoError uses t.FailNow so its stop the execution.
-
-		func TestNoError(t *testing.T) {
-			is := is.New(t)
-			girl, err := findGirlfriend("Anyone?")
-			is.NoError(err) // poor you
-			is.Equal(girl, nil) // it will not get executed
-		}
-
-Will output:
-
-		is.NoError: girlfriend not found // poor you
-*/
-func (is *Is) NoError(err error) {
-	is.t.Helper()
-	prefix := "is.NoError"
-
-	if err != nil {
-		is.logf(is.t.FailNow, "%s: %q", prefix, err.Error())
-	}
-}
-
-/*
 Error asserts that err is one of the expectedErrors.
 If no expectedErrors is given, any error will output passed the tests.
 
 		func TestError(t *testing.T) {
 			is := is.New(t)
-			girl, err := findGirlfriend("Anyone?")
-			is.Error(err, errors.New("really?")) // i give up
+			_, err := findGirlfriend("Anyone?")
+			is.Error(err, errors.New("coding")) // its not easy
 		}
 
 Will output:
 
-		is.Error: girlfriend not found != really? // i give up
+		is.Error: get a girlfriend as programmer? != coding // its not easy
 */
 func (is *Is) Error(err error, expectedErrors ...error) {
 	is.t.Helper()
@@ -224,6 +200,30 @@ func (is *Is) Error(err error, expectedErrors ...error) {
 	}
 
 	is.logf(is.t.Fail, "%s: %q is not in expected errors", prefix, err.Error())
+}
+
+/*
+NoError assert that err is nil. Upon failing the test,
+is.NoError uses t.FailNow so its stop the execution.
+
+		func TestNoError(t *testing.T) {
+			is := is.New(t)
+			girl, err := findGirlfriend("Anyone?")
+			is.NoError(err) // i give up
+			is.Equal(girl, nil) // it will not get executed
+		}
+
+Will output:
+
+		is.NoError: girlfriend not found // i give up
+*/
+func (is *Is) NoError(err error) {
+	is.t.Helper()
+	prefix := "is.NoError"
+
+	if err != nil {
+		is.logf(is.t.FailNow, "%s: %q", prefix, err.Error())
+	}
 }
 
 /*
