@@ -9,27 +9,16 @@ import (
 
 type mockT struct {
 	fail        bool
-	skip        bool
-	s           string
+	failNow     bool
+	message     string
 	helperCount int
 }
 
-func (m *mockT) Error(args ...interface{})                 { m.Log(args...); m.Fail() }
-func (m *mockT) Errorf(format string, args ...interface{}) { m.Logf(format, args...); m.Fail() }
-func (m *mockT) Fail()                                     { m.fail = true }
-func (m *mockT) FailNow()                                  { m.fail = true }
-func (m *mockT) Failed() bool                              { return m.fail }
-func (m *mockT) Fatal(args ...interface{})                 { m.Log(args...); m.FailNow() }
-func (m *mockT) Fatalf(format string, args ...interface{}) { m.Logf(format, args...); m.FailNow() }
-func (m *mockT) Log(args ...interface{})                   { m.s = fmt.Sprint(args...) }
-func (m *mockT) Logf(format string, args ...interface{})   { m.s = fmt.Sprintf(format, args...) }
-func (m *mockT) Name() string                              { return "" }
-func (m *mockT) Skip(args ...interface{})                  { m.Log(args...); m.SkipNow() }
-func (m *mockT) SkipNow()                                  { m.skip = true }
-func (m *mockT) Skipf(format string, args ...interface{})  { m.Logf(format, args...); m.SkipNow() }
-func (m *mockT) Skipped() bool                             { return m.skip }
-func (m *mockT) Helper()                                   { m.helperCount++ }
-func (m *mockT) out() string                               { return m.s }
+func (m *mockT) Fail()                   { m.fail = true }
+func (m *mockT) FailNow()                { m.failNow = true }
+func (m *mockT) Log(args ...interface{}) { m.message = fmt.Sprint(args...) }
+func (m *mockT) Helper()                 { m.helperCount++ }
+func (m *mockT) out() string             { return m.message }
 
 func TestEqual(t *testing.T) {
 	tests := []struct {

@@ -75,7 +75,7 @@ func (is *Is) logf(format string, args ...interface{}) {
 	if comment := is.loadComment(); comment != "" {
 		msg = append(msg, comment)
 	}
-	is.t.Error(strings.Join(msg, " "))
+	is.t.Log(strings.Join(msg, " "))
 }
 
 func valWithType(v interface{}) string {
@@ -181,19 +181,8 @@ func (is *Is) loadArgument(funcName string) string {
 
 // T is the interface common to testing type.
 type T interface {
-	Error(args ...interface{})
-	Errorf(format string, args ...interface{})
 	Fail()
 	FailNow()
-	Failed() bool
-	Fatal(args ...interface{})
-	Fatalf(format string, args ...interface{})
 	Log(args ...interface{})
-	Logf(format string, args ...interface{})
-	Name() string
-	Skip(args ...interface{})
-	SkipNow()
-	Skipf(format string, args ...interface{})
-	Skipped() bool
 	Helper()
 }
