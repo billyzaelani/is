@@ -49,6 +49,7 @@ func assertState(t *testing.T, got, want failState) {
 }
 
 func TestEqual(t *testing.T) {
+	prefix := "is.Equal: "
 	tests := []struct {
 		Name  string
 		State failState
@@ -64,7 +65,7 @@ func TestEqual(t *testing.T) {
 		{
 			Name:  "not equal",
 			State: fail,
-			Msg:   `1 != 2`,
+			Msg:   prefix + `1 != 2`,
 			F:     func(is *is.Is) { is.Equal(1, 2) },
 		},
 		{
@@ -76,25 +77,25 @@ func TestEqual(t *testing.T) {
 		{
 			Name:  "different data type",
 			State: fail,
-			Msg:   `int(3) != bool(false)`,
+			Msg:   prefix + `int(3) != bool(false)`,
 			F:     func(is *is.Is) { is.Equal(3, false) },
 		},
 		{
 			Name:  "specific integer",
 			State: fail,
-			Msg:   `int32(1) != int64(2)`,
+			Msg:   prefix + `int32(1) != int64(2)`,
 			F:     func(is *is.Is) { is.Equal(int32(1), int64(2)) },
 		},
 		{
 			Name:  "with nil",
 			State: fail,
-			Msg:   `<nil> != string(nil)`,
+			Msg:   prefix + `<nil> != string(nil)`,
 			F:     func(is *is.Is) { is.Equal(nil, "nil") },
 		},
 		{
 			Name:  "nil slice",
 			State: fail,
-			Msg:   `[] != [one two]`,
+			Msg:   prefix + `[] != [one two]`,
 			F: func(is *is.Is) {
 				var a []string
 				b := []string{"one", "two"}
@@ -104,13 +105,13 @@ func TestEqual(t *testing.T) {
 		{
 			Name:  "nil with slice",
 			State: fail,
-			Msg:   `<nil> != []string([one two])`,
+			Msg:   prefix + `<nil> != []string([one two])`,
 			F:     func(is *is.Is) { is.Equal(nil, []string{"one", "two"}) },
 		},
 		{
 			Name:  "with comment",
 			State: fail,
-			Msg:   "foo != bar // foo is not bar",
+			Msg:   prefix + `foo != bar // foo is not bar`,
 			F: func(is *is.Is) {
 				is.Equal("foo", "bar") // foo is not bar
 			},
@@ -132,6 +133,7 @@ func TestEqual(t *testing.T) {
 }
 
 func TestNoError(t *testing.T) {
+	prefix := "is.NoError: "
 	tests := []struct {
 		Name  string
 		State failState
@@ -150,13 +152,13 @@ func TestNoError(t *testing.T) {
 		{
 			Name:  "error",
 			State: failNow,
-			Msg:   `NoError: "something's wrong"`,
+			Msg:   prefix + `"something's wrong"`,
 			F:     func(is *is.Is) { is.NoError(errWrong) },
 		},
 		{
 			Name:  "error with comment",
 			State: failNow,
-			Msg:   `NoError: "something's wrong" // shouldn't be error`,
+			Msg:   prefix + `"something's wrong" // shouldn't be error`,
 			F: func(is *is.Is) {
 				is.NoError(errWrong) // shouldn't be error
 			},
@@ -184,6 +186,7 @@ var (
 )
 
 func TestError(t *testing.T) {
+	prefix := "is.Error: "
 	tests := []struct {
 		Name  string
 		State failState
@@ -193,7 +196,7 @@ func TestError(t *testing.T) {
 		{
 			Name:  "nil error",
 			State: fail,
-			Msg:   `Error: <nil>`,
+			Msg:   prefix + `<nil>`,
 			F: func(is *is.Is) {
 				var err error
 				is.Error(err)
@@ -202,7 +205,7 @@ func TestError(t *testing.T) {
 		{
 			Name:  "nil error with comment",
 			State: fail,
-			Msg:   `Error: <nil> // shouldn't be nil`,
+			Msg:   prefix + `<nil> // shouldn't be nil`,
 			F: func(is *is.Is) {
 				var err error
 				is.Error(err) // shouldn't be nil
@@ -217,7 +220,7 @@ func TestError(t *testing.T) {
 		{
 			Name:  "nil with expected error",
 			State: fail,
-			Msg:   `Error: <nil>`,
+			Msg:   prefix + `<nil>`,
 			F: func(is *is.Is) {
 				var err error
 				is.Error(err, err1)
@@ -242,7 +245,7 @@ func TestError(t *testing.T) {
 		{
 			Name:  "any error with false expected error",
 			State: fail,
-			Msg:   `Error: "error 1" != "error 2"`,
+			Msg:   prefix + `"error 1" != "error 2"`,
 			F: func(is *is.Is) {
 				is.Error(err1, err2)
 			},
@@ -250,7 +253,7 @@ func TestError(t *testing.T) {
 		{
 			Name:  "any error with multiple false expected error",
 			State: fail,
-			Msg:   `Error: "error 1" is not in expected errors`,
+			Msg:   prefix + `"error 1" is not in expected errors`,
 			F: func(is *is.Is) {
 				is.Error(err1, err2, err3)
 			},
@@ -272,6 +275,7 @@ func TestError(t *testing.T) {
 }
 
 func TestTrue(t *testing.T) {
+	prefix := "is.True: "
 	tests := []struct {
 		Name  string
 		State failState
@@ -289,7 +293,7 @@ func TestTrue(t *testing.T) {
 		{
 			Name:  "false",
 			State: fail,
-			Msg:   `false: 1 == 2 // comment`,
+			Msg:   prefix + `1 == 2 // comment`,
 			F: func(is *is.Is) {
 				is.True(1 == 2) // comment
 			},
@@ -297,7 +301,7 @@ func TestTrue(t *testing.T) {
 		{
 			Name:  "extra parentheses",
 			State: fail,
-			Msg:   `false: (1 == 2) // comment`,
+			Msg:   prefix + `(1 == 2) // comment`,
 			F: func(is *is.Is) {
 				is.True((1 == 2)) // comment
 			},
@@ -305,7 +309,7 @@ func TestTrue(t *testing.T) {
 		{
 			Name:  "new line",
 			State: fail,
-			Msg:   `false: (1 == 2) && false`,
+			Msg:   prefix + `(1 == 2) && false`,
 			F: func(is *is.Is) {
 				is.True((1 == 2) &&
 					false)
@@ -314,7 +318,7 @@ func TestTrue(t *testing.T) {
 		{
 			Name:  "multi line",
 			State: fail,
-			Msg:   `false: (1 == 2) && false || false`,
+			Msg:   prefix + `(1 == 2) && false || false`,
 			F: func(is *is.Is) {
 				is.True((1 == 2) &&
 					false ||
@@ -324,7 +328,7 @@ func TestTrue(t *testing.T) {
 		{
 			Name:  "multi line with comment in first line",
 			State: fail,
-			Msg:   `false: (1 == 2) && false || false // comment`,
+			Msg:   prefix + `(1 == 2) && false || false // comment`,
 			F: func(is *is.Is) {
 				is.True((1 == 2) && // comment
 					false ||
@@ -334,7 +338,7 @@ func TestTrue(t *testing.T) {
 		{
 			Name:  "multi line with comment in non-first line",
 			State: fail,
-			Msg:   `false: (1 == 2) && false || false`,
+			Msg:   prefix + `(1 == 2) && false || false`,
 			F: func(is *is.Is) {
 				is.True((1 == 2) &&
 					false || // cannot be printed

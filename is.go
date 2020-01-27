@@ -52,21 +52,23 @@ func New(t T) *Is {
 // 		wassup world != hello world // greeting the world
 func (is *Is) Equal(a, b interface{}) {
 	is.t.Helper()
+	prefix := "is.Equal"
+
 	if reflect.DeepEqual(a, b) {
 		return
 	}
 
 	if isNil(a) || isNil(b) {
-		is.logf(is.t.Fail, "%s != %s", valWithType(a), valWithType(b))
+		is.logf(is.t.Fail, "%s: %s != %s", prefix, valWithType(a), valWithType(b))
 		return
 	}
 
 	if reflect.ValueOf(a).Type() == reflect.ValueOf(b).Type() {
-		is.logf(is.t.Fail, "%v != %v", a, b)
+		is.logf(is.t.Fail, "%s: %v != %v", prefix, a, b)
 		return
 	}
 
-	is.logf(is.t.Fail, "%s != %s", valWithType(a), valWithType(b))
+	is.logf(is.t.Fail, "%s: %s != %s", prefix, valWithType(a), valWithType(b))
 }
 
 func (is *Is) logf(failFunc func(), format string, args ...interface{}) {
@@ -125,16 +127,18 @@ func (is *Is) loadComment() string {
 // 		NoError: girlfriend not found // poor you
 func (is *Is) NoError(err error) {
 	is.t.Helper()
+	prefix := "is.NoError"
 	if err != nil {
-		is.logf(is.t.FailNow, "NoError: %q", err.Error())
+		is.logf(is.t.FailNow, "%s: %q", prefix, err.Error())
 	}
 }
 
 // Error asserts that err is one of the expectedErrors.
 // If no expectedErrors is given, any error will output passed the tests.
 func (is *Is) Error(err error, expectedErrors ...error) {
+	prefix := "is.Error"
 	if err == nil {
-		is.logf(is.t.Fail, "Error: <nil>")
+		is.logf(is.t.Fail, "%s: <nil>", prefix)
 		return
 	}
 
@@ -151,11 +155,11 @@ func (is *Is) Error(err error, expectedErrors ...error) {
 	}
 
 	if lenErr == 1 {
-		is.logf(is.t.Fail, "Error: %q != %q", err.Error(), expectedErrors[0].Error())
+		is.logf(is.t.Fail, "%s: %q != %q", prefix, err.Error(), expectedErrors[0].Error())
 		return
 	}
 
-	is.logf(is.t.Fail, "Error: %q is not in expected errors", err.Error())
+	is.logf(is.t.Fail, "%s: %q is not in expected errors", prefix, err.Error())
 }
 
 // True asserts that expression is true.
@@ -172,12 +176,14 @@ func (is *Is) Error(err error, expectedErrors ...error) {
 // 		wallet != 0 // wallet should not be 0
 func (is *Is) True(expression bool) {
 	is.t.Helper()
+	prefix := "is.True"
+
 	if expression {
 		return
 	}
 
 	args := is.loadArgument("True")
-	is.logf(is.t.Fail, "false: %s", args)
+	is.logf(is.t.Fail, "%s: %s", prefix, args)
 }
 
 func (is *Is) loadArgument(funcName string) string {
