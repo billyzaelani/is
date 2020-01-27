@@ -8,87 +8,122 @@ import (
 )
 
 type mockT struct {
-	fail        bool
-	failNow     bool
-	message     string
+	state       failState
+	msg         string
 	helperCount int
 }
 
-func (m *mockT) Fail()                   { m.fail = true }
-func (m *mockT) FailNow()                { m.failNow = true }
-func (m *mockT) Log(args ...interface{}) { m.message = fmt.Sprint(args...) }
+func (m *mockT) Fail()                   { m.state = fail }
+func (m *mockT) FailNow()                { m.state = failNow }
+func (m *mockT) Log(args ...interface{}) { m.msg = fmt.Sprint(args...) }
 func (m *mockT) Helper()                 { m.helperCount++ }
-func (m *mockT) out() string             { return m.message }
+
+type failState int
+
+const (
+	pass failState = iota
+	fail
+	failNow
+)
+
+func (f failState) String() string {
+	var state string
+	switch f {
+	case pass:
+		state = "passed"
+	case fail:
+		state = "failed"
+	case failNow:
+		state = "failed now"
+	}
+	return state
+}
+
+func assertState(t *testing.T, got, want failState) {
+	t.Helper()
+	if got != want {
+		t.Fatalf("the tests should be %s", want)
+	}
+}
 
 func TestEqual(t *testing.T) {
 	tests := []struct {
-		Name string
-		Got  func(is *is.Is)
-		Want string
+		Name  string
+		State failState
+		Msg   string
+		F     func(is *is.Is)
 	}{
 		{
-			Name: "equal",
-			Got:  func(is *is.Is) { is.Equal(1, 1) },
-			Want: ``,
+			Name:  "equal",
+			State: pass,
+			Msg:   ``,
+			F:     func(is *is.Is) { is.Equal(1, 1) },
 		},
 		{
-			Name: "not equal",
-			Got:  func(is *is.Is) { is.Equal(1, 2) },
-			Want: `1 != 2`,
+			Name:  "not equal",
+			State: fail,
+			Msg:   `1 != 2`,
+			F:     func(is *is.Is) { is.Equal(1, 2) },
 		},
 		{
-			Name: "both nil",
-			Got:  func(is *is.Is) { is.Equal(nil, nil) },
-			Want: ``,
+			Name:  "both nil",
+			State: pass,
+			Msg:   ``,
+			F:     func(is *is.Is) { is.Equal(nil, nil) },
 		},
 		{
-			Name: "different data type",
-			Got:  func(is *is.Is) { is.Equal(3, false) },
-			Want: `int(3) != bool(false)`,
+			Name:  "different data type",
+			State: fail,
+			Msg:   `int(3) != bool(false)`,
+			F:     func(is *is.Is) { is.Equal(3, false) },
 		},
 		{
-			Name: "specific integer",
-			Got:  func(is *is.Is) { is.Equal(int32(1), int64(2)) },
-			Want: `int32(1) != int64(2)`,
+			Name:  "specific integer",
+			State: fail,
+			Msg:   `int32(1) != int64(2)`,
+			F:     func(is *is.Is) { is.Equal(int32(1), int64(2)) },
 		},
 		{
-			Name: "with nil",
-			Got:  func(is *is.Is) { is.Equal(nil, "nil") },
-			Want: `<nil> != string(nil)`,
+			Name:  "with nil",
+			State: fail,
+			Msg:   `<nil> != string(nil)`,
+			F:     func(is *is.Is) { is.Equal(nil, "nil") },
 		},
 		{
-			Name: "nil slice",
-			Got: func(is *is.Is) {
+			Name:  "nil slice",
+			State: fail,
+			Msg:   `[] != [one two]`,
+			F: func(is *is.Is) {
 				var a []string
 				b := []string{"one", "two"}
 				is.Equal(a, b)
 			},
-			Want: `[] != [one two]`,
 		},
 		{
-			Name: "nil with slice",
-			Got:  func(is *is.Is) { is.Equal(nil, []string{"one", "two"}) },
-			Want: `<nil> != []string([one two])`,
+			Name:  "nil with slice",
+			State: fail,
+			Msg:   `<nil> != []string([one two])`,
+			F:     func(is *is.Is) { is.Equal(nil, []string{"one", "two"}) },
 		},
 		{
-			Name: "with comment",
-			Got: func(is *is.Is) {
+			Name:  "with comment",
+			State: fail,
+			Msg:   "foo != bar // foo is not bar",
+			F: func(is *is.Is) {
 				is.Equal("foo", "bar") // foo is not bar
 			},
-			Want: "foo != bar // foo is not bar",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.Name, func(t *testing.T) {
-			m := &mockT{}
+			m := new(mockT)
 			is := is.New(m)
-			tt.Got(is)
-			got := m.out()
-			want := tt.Want
+			tt.F(is)
 
-			if got != want {
-				t.Errorf("%q != %q", got, want)
+			assertState(t, m.state, tt.State)
+			if m.msg != tt.Msg {
+				t.Errorf("%q != %q", m.msg, tt.Msg)
 			}
 		})
 	}
@@ -96,42 +131,45 @@ func TestEqual(t *testing.T) {
 
 func TestNoErr(t *testing.T) {
 	tests := []struct {
-		Name string
-		Got  func(is *is.Is)
-		Want string
+		Name  string
+		State failState
+		Msg   string
+		F     func(is *is.Is)
 	}{
 		{
-			Name: "no error",
-			Got: func(is *is.Is) {
+			Name:  "no error",
+			State: pass,
+			Msg:   ``,
+			F: func(is *is.Is) {
 				var err error
 				is.NoErr(err)
 			},
-			Want: ``,
 		},
 		{
-			Name: "error",
-			Got:  func(is *is.Is) { is.NoErr(errors.New("something's wrong")) },
-			Want: `err: something's wrong`,
+			Name:  "error",
+			State: failNow,
+			Msg:   `err: something's wrong`,
+			F:     func(is *is.Is) { is.NoErr(errors.New("something's wrong")) },
 		},
 		{
-			Name: "error with comment",
-			Got: func(is *is.Is) {
+			Name:  "error with comment",
+			State: failNow,
+			Msg:   `err: something's wrong // shouldn't be error`,
+			F: func(is *is.Is) {
 				is.NoErr(errors.New("something's wrong")) // shouldn't be error
 			},
-			Want: `err: something's wrong // shouldn't be error`,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.Name, func(t *testing.T) {
-			m := &mockT{}
+			m := new(mockT)
 			is := is.New(m)
-			tt.Got(is)
-			got := m.out()
-			want := tt.Want
+			tt.F(is)
 
-			if got != want {
-				t.Errorf("%q != %q", got, want)
+			assertState(t, m.state, tt.State)
+			if m.msg != tt.Msg {
+				t.Errorf("%q != %q", m.msg, tt.Msg)
 			}
 		})
 	}
@@ -139,78 +177,85 @@ func TestNoErr(t *testing.T) {
 
 func TestTrue(t *testing.T) {
 	tests := []struct {
-		Name string
-		Got  func(is *is.Is)
-		Want string
+		Name  string
+		State failState
+		Msg   string
+		F     func(is *is.Is)
 	}{
 		{
-			Name: "true",
-			Got: func(is *is.Is) {
+			Name:  "true",
+			State: pass,
+			Msg:   ``,
+			F: func(is *is.Is) {
 				is.True(1 == 1) // true
 			},
-			Want: ``,
 		},
 		{
-			Name: "false",
-			Got: func(is *is.Is) {
+			Name:  "false",
+			State: fail,
+			Msg:   `false: 1 == 2 // comment`,
+			F: func(is *is.Is) {
 				is.True(1 == 2) // comment
 			},
-			Want: `false: 1 == 2 // comment`,
 		},
 		{
-			Name: "extra parentheses",
-			Got: func(is *is.Is) {
+			Name:  "extra parentheses",
+			State: fail,
+			Msg:   `false: (1 == 2) // comment`,
+			F: func(is *is.Is) {
 				is.True((1 == 2)) // comment
 			},
-			Want: `false: (1 == 2) // comment`,
 		},
 		{
-			Name: "new line",
-			Got: func(is *is.Is) {
+			Name:  "new line",
+			State: fail,
+			Msg:   `false: (1 == 2) && false`,
+			F: func(is *is.Is) {
 				is.True((1 == 2) &&
 					false)
 			},
-			Want: `false: (1 == 2) && false`,
 		},
 		{
-			Name: "multi line",
-			Got: func(is *is.Is) {
+			Name:  "multi line",
+			State: fail,
+			Msg:   `false: (1 == 2) && false || false`,
+			F: func(is *is.Is) {
 				is.True((1 == 2) &&
 					false ||
 					false)
 			},
-			Want: `false: (1 == 2) && false || false`,
 		},
 		{
-			Name: "multi line with comment in first line",
-			Got: func(is *is.Is) {
+			Name:  "multi line with comment in first line",
+			State: fail,
+			Msg:   `false: (1 == 2) && false || false // comment`,
+			F: func(is *is.Is) {
 				is.True((1 == 2) && // comment
 					false ||
 					false)
 			},
-			Want: `false: (1 == 2) && false || false // comment`,
 		},
 		{
-			Name: "multi line with comment in non-first line",
-			Got: func(is *is.Is) {
+			Name:  "multi line with comment in non-first line",
+			State: fail,
+			Msg:   `false: (1 == 2) && false || false`,
+			F: func(is *is.Is) {
 				is.True((1 == 2) &&
 					false || // cannot be printed
 					false)
 			},
-			Want: `false: (1 == 2) && false || false`,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.Name, func(t *testing.T) {
-			m := &mockT{}
+			m := new(mockT)
 			is := is.New(m)
-			tt.Got(is)
-			got := m.out()
-			want := tt.Want
+			tt.F(is)
 
-			if got != want {
-				t.Errorf("%q != %q", got, want)
+			assertState(t, m.state, tt.State)
+			if m.msg != tt.Msg {
+				t.Errorf("%q != %q", m.msg, tt.Msg)
 			}
 		})
 	}
@@ -219,36 +264,34 @@ func TestTrue(t *testing.T) {
 func TestLine(t *testing.T) {
 	tests := []struct {
 		Name string
-		Got  func(is *is.Is)
+		F    func(is *is.Is)
 		Want int
 	}{
 		{
 			Name: "Equal",
-			Got:  func(is *is.Is) { is.Equal(1, 2) },
+			F:    func(is *is.Is) { is.Equal(1, 2) },
 			Want: 2,
 		},
 		{
 			Name: "NoErr",
-			Got:  func(is *is.Is) { is.NoErr(errors.New("something's wrong")) },
+			F:    func(is *is.Is) { is.NoErr(errors.New("something's wrong")) },
 			Want: 2,
 		},
 		{
 			Name: "True",
-			Got:  func(is *is.Is) { is.True(1 == 2) },
+			F:    func(is *is.Is) { is.True(1 == 2) },
 			Want: 2,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.Name, func(t *testing.T) {
-			m := &mockT{}
+			m := new(mockT)
 			is := is.New(m)
-			tt.Got(is)
-			got := m.helperCount
-			want := tt.Want
+			tt.F(is)
 
-			if got != want {
-				t.Errorf("%d != %d", got, want)
+			if m.helperCount != tt.Want {
+				t.Errorf("%d != %d", m.helperCount, tt.Want)
 			}
 		})
 	}

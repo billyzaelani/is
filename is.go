@@ -57,25 +57,26 @@ func (is *Is) Equal(a, b interface{}) {
 	}
 
 	if isNil(a) || isNil(b) {
-		is.logf("%s != %s", valWithType(a), valWithType(b))
+		is.logf(is.t.Fail, "%s != %s", valWithType(a), valWithType(b))
 		return
 	}
 
 	if reflect.ValueOf(a).Type() == reflect.ValueOf(b).Type() {
-		is.logf("%v != %v", a, b)
+		is.logf(is.t.Fail, "%v != %v", a, b)
 		return
 	}
 
-	is.logf("%s != %s", valWithType(a), valWithType(b))
+	is.logf(is.t.Fail, "%s != %s", valWithType(a), valWithType(b))
 }
 
-func (is *Is) logf(format string, args ...interface{}) {
+func (is *Is) logf(failFunc func(), format string, args ...interface{}) {
 	is.t.Helper()
 	msg := []string{fmt.Sprintf(format, args...)}
 	if comment := is.loadComment(); comment != "" {
 		msg = append(msg, comment)
 	}
 	is.t.Log(strings.Join(msg, " "))
+	failFunc()
 }
 
 func valWithType(v interface{}) string {
@@ -125,7 +126,7 @@ func (is *Is) loadComment() string {
 func (is *Is) NoErr(err error) {
 	is.t.Helper()
 	if err != nil {
-		is.logf("err: %s", err.Error())
+		is.logf(is.t.FailNow, "err: %s", err.Error())
 	}
 }
 
@@ -148,7 +149,7 @@ func (is *Is) True(expression bool) {
 	}
 
 	args := is.loadArgument("True")
-	is.logf("false: %s", args)
+	is.logf(is.t.Fail, "false: %s", args)
 }
 
 func (is *Is) loadArgument(funcName string) string {
