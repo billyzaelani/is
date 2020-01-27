@@ -3,8 +3,9 @@ package is_test
 import (
 	"errors"
 	"fmt"
-	"github.com/billyzaelani/is"
 	"testing"
+
+	"github.com/billyzaelani/is"
 )
 
 var errWrong = errors.New("something's wrong")
@@ -375,6 +376,11 @@ func TestLine(t *testing.T) {
 		{
 			Name: "NoError",
 			F:    func(is *is.Is) { is.NoError(errWrong) },
+			Want: 2,
+		},
+		{
+			Name: "Error",
+			F:    func(is *is.Is) { is.Error(nil) },
 			Want: 2,
 		},
 		{

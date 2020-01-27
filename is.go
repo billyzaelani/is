@@ -136,6 +136,7 @@ func (is *Is) NoError(err error) {
 // Error asserts that err is one of the expectedErrors.
 // If no expectedErrors is given, any error will output passed the tests.
 func (is *Is) Error(err error, expectedErrors ...error) {
+	is.t.Helper()
 	prefix := "is.Error"
 	if err == nil {
 		is.logf(is.t.Fail, "%s: <nil>", prefix)
