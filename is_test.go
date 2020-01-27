@@ -200,6 +200,15 @@ func TestError(t *testing.T) {
 			},
 		},
 		{
+			Name:  "nil error with comment",
+			State: fail,
+			Msg:   `Error: <nil> // shouldn't be nil`,
+			F: func(is *is.Is) {
+				var err error
+				is.Error(err) // shouldn't be nil
+			},
+		},
+		{
 			Name:  "any error",
 			State: pass,
 			Msg:   ``,
