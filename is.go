@@ -130,6 +130,34 @@ func (is *Is) NoErr(err error) {
 	}
 }
 
+// Error asserts that err is one of the expectedErrors.
+// If no expectedErrors is given, any error will output passed the tests.
+func (is *Is) Error(err error, expectedErrors ...error) {
+	if err == nil {
+		is.logf(is.t.Fail, "Error: <nil>")
+		return
+	}
+
+	lenErr := len(expectedErrors)
+
+	if lenErr == 0 {
+		return
+	}
+
+	for _, expectedError := range expectedErrors {
+		if err == expectedError {
+			return
+		}
+	}
+
+	if lenErr == 1 {
+		is.logf(is.t.Fail, "Error: %q != %q", err.Error(), expectedErrors[0].Error())
+		return
+	}
+
+	is.logf(is.t.Fail, "Error: %q is not in expected errors", err.Error())
+}
+
 // True asserts that expression is true.
 // The expression code itself will be reported if the assertion fails.
 //

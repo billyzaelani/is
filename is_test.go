@@ -175,6 +175,91 @@ func TestNoErr(t *testing.T) {
 	}
 }
 
+var (
+	err1 = errors.New("error 1")
+	err2 = errors.New("error 2")
+	err3 = errors.New("error 3")
+)
+
+func TestError(t *testing.T) {
+	tests := []struct {
+		Name  string
+		State failState
+		Msg   string
+		F     func(is *is.Is)
+	}{
+		{
+			Name:  "nil error",
+			State: fail,
+			Msg:   `Error: <nil>`,
+			F: func(is *is.Is) {
+				var err error
+				is.Error(err)
+			},
+		},
+		{
+			Name:  "any error",
+			State: pass,
+			Msg:   ``,
+			F:     func(is *is.Is) { is.Error(err1) },
+		},
+		{
+			Name:  "nil with expected error",
+			State: fail,
+			Msg:   `Error: <nil>`,
+			F: func(is *is.Is) {
+				var err error
+				is.Error(err, err1)
+			},
+		},
+		{
+			Name:  "any error with true expected error",
+			State: pass,
+			Msg:   ``,
+			F: func(is *is.Is) {
+				is.Error(err1, err1)
+			},
+		},
+		{
+			Name:  "any error with multiple true expected error",
+			State: pass,
+			Msg:   ``,
+			F: func(is *is.Is) {
+				is.Error(err2, err1, err2, err3)
+			},
+		},
+		{
+			Name:  "any error with false expected error",
+			State: fail,
+			Msg:   `Error: "error 1" != "error 2"`,
+			F: func(is *is.Is) {
+				is.Error(err1, err2)
+			},
+		},
+		{
+			Name:  "any error with multiple false expected error",
+			State: fail,
+			Msg:   `Error: "error 1" is not in expected errors`,
+			F: func(is *is.Is) {
+				is.Error(err1, err2, err3)
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.Name, func(t *testing.T) {
+			m := new(mockT)
+			is := is.New(m)
+			tt.F(is)
+
+			assertState(t, m.state, tt.State)
+			if m.msg != tt.Msg {
+				t.Errorf("got: %s, want: %s", m.msg, tt.Msg)
+			}
+		})
+	}
+}
+
 func TestTrue(t *testing.T) {
 	tests := []struct {
 		Name  string
