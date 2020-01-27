@@ -195,11 +195,11 @@ func (is *Is) Error(err error, expectedErrors ...error) {
 	}
 
 	if lenErr == 1 {
-		is.logf(is.t.Fail, "%s: %q != %q", prefix, err.Error(), expectedErrors[0].Error())
+		is.logf(is.t.Fail, "%s: %s != %s", prefix, err.Error(), expectedErrors[0].Error())
 		return
 	}
 
-	is.logf(is.t.Fail, "%s: %q is not in expected errors", prefix, err.Error())
+	is.logf(is.t.Fail, "%s: %s is not in expected errors", prefix, err.Error())
 }
 
 /*
@@ -222,7 +222,7 @@ func (is *Is) NoError(err error) {
 	prefix := "is.NoError"
 
 	if err != nil {
-		is.logf(is.t.FailNow, "%s: %q", prefix, err.Error())
+		is.logf(is.t.FailNow, "%s: %s", prefix, err.Error())
 	}
 }
 

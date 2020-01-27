@@ -153,13 +153,13 @@ func TestNoError(t *testing.T) {
 		{
 			Name:  "error",
 			State: failNow,
-			Msg:   prefix + `"something's wrong"`,
+			Msg:   prefix + `something's wrong`,
 			F:     func(is *is.Is) { is.NoError(errWrong) },
 		},
 		{
 			Name:  "error with comment",
 			State: failNow,
-			Msg:   prefix + `"something's wrong" // shouldn't be error`,
+			Msg:   prefix + `something's wrong // shouldn't be error`,
 			F: func(is *is.Is) {
 				is.NoError(errWrong) // shouldn't be error
 			},
@@ -246,7 +246,7 @@ func TestError(t *testing.T) {
 		{
 			Name:  "any error with false expected error",
 			State: fail,
-			Msg:   prefix + `"error 1" != "error 2"`,
+			Msg:   prefix + `error 1 != error 2`,
 			F: func(is *is.Is) {
 				is.Error(err1, err2)
 			},
@@ -254,7 +254,7 @@ func TestError(t *testing.T) {
 		{
 			Name:  "any error with multiple false expected error",
 			State: fail,
-			Msg:   prefix + `"error 1" is not in expected errors`,
+			Msg:   prefix + `error 1 is not in expected errors`,
 			F: func(is *is.Is) {
 				is.Error(err1, err2, err3)
 			},
