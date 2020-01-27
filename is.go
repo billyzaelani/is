@@ -1,19 +1,59 @@
-// Package is provides helper function for testing with the standard library.
-//
-// Comment on the assertion line are used to add a description.
-//
-// The following failing test:
-//
-//		func TestFail(t *testing.T) {
-// 			// always start tests with this
-//			is := is.New(t)
-// 			a, b := 1, 2
-// 			is.Equal(a, b) // expect to be the same
-//		}
-//
-// Will output:
-//
-// 		1 != 2 // expect to be the same
+/*
+Package is provides helper function for comparing expected values
+to actual values.
+
+Comment add a description
+
+Comment on the assertion lines is optional feature to be printed
+as a description in the fail message to keep the API beautifully clean
+and easy to use.
+
+The following failing test:
+
+		func TestComment(t *testing.T) {
+			is := is.New(t)
+ 			a, b := 1, 2
+ 			is.Equal(a, b) // expect to be the same
+		}
+
+Will output:
+
+		is.Equal: 1 != 2 // expect to be the same
+
+Example usage
+
+The example below shows some useful ways to use package is in your test:
+
+		package is_test
+
+		import (
+			"errors"
+			"strconv"
+			"testing"
+
+			"github.com/billyzaelani/is"
+		)
+
+		func TestIs(t *testing.T) {
+			// always start tests with this
+			is := is.New(t)
+
+			i, err := strconv.Atoi("42")
+
+			is.NoError(err)  // passed
+			is.Equal(i, 46)  // shouldn't be equal
+			is.True(i == 46) // printed the expression code upon failing the test
+
+			j, err = strconv.Atoi("forty two")
+			is.Error(err, errors.New("expected errors")) // the error is not expected
+			is.NoError(err)                              // we got some error here
+
+			// the code below is not executed because is.NoError uses
+			// t.FailNow upon failing the test
+			is.True(j)
+		}
+
+*/
 package is
 
 import (
@@ -34,22 +74,26 @@ type Is struct {
 	arguments map[int]string // k:line, v:argument
 }
 
-// New makes a new test helper.
+// New makes a new test helper given by T. Any failures will
+// reported onto T. Most of the time T will be testing.T from the stdlib.
 func New(t T) *Is {
 	return &Is{t: t}
 }
 
-// Equal asserts that a and b are equal.
-//
-// 		func TestEqual(t *testing.T) {
-// 			is := is.New(t)
-// 			got := hello("world").
-// 			is.Equal(got, "hello world") // greeting the world
-// 		}
-//
-// Will output:
-//
-// 		wassup world != hello world // greeting the world
+/*
+Equal asserts that a and b are equal. Upon failing the test,
+is.Equal also report the data type if a and b has different data type.
+
+		func TestEqual(t *testing.T) {
+			is := is.New(t)
+			got := hello("girl").
+			is.Equal(got, false) // seduce a girl
+		}
+
+Will output:
+
+		is.Equal: string(hello girl) != bool(false) // seduce a girl
+*/
 func (is *Is) Equal(a, b interface{}) {
 	is.t.Helper()
 	prefix := "is.Equal"
@@ -73,6 +117,7 @@ func (is *Is) Equal(a, b interface{}) {
 
 func (is *Is) logf(failFunc func(), format string, args ...interface{}) {
 	is.t.Helper()
+
 	msg := []string{fmt.Sprintf(format, args...)}
 	if comment := is.loadComment(); comment != "" {
 		msg = append(msg, comment)
@@ -114,30 +159,48 @@ func (is *Is) loadComment() string {
 	return is.comments[line]
 }
 
-// NoError assert that err is nil.
-//
-// 		func TestNoError(t *testing.T) {
-//			is := is.New(t)
-// 			_, err := findGirlfriend("Anyone?")
-// 			is.NoError(err) // poor you
-// 		}
-//
-// Will output:
-//
-// 		NoError: girlfriend not found // poor you
+/*
+NoError assert that err is nil. Upon failing the test,
+is.NoError uses t.FailNow so its stop the execution.
+
+		func TestNoError(t *testing.T) {
+			is := is.New(t)
+			girl, err := findGirlfriend("Anyone?")
+			is.NoError(err) // poor you
+			is.Equal(girl, nil) // it will not get executed
+		}
+
+Will output:
+
+		is.NoError: girlfriend not found // poor you
+*/
 func (is *Is) NoError(err error) {
 	is.t.Helper()
 	prefix := "is.NoError"
+
 	if err != nil {
 		is.logf(is.t.FailNow, "%s: %q", prefix, err.Error())
 	}
 }
 
-// Error asserts that err is one of the expectedErrors.
-// If no expectedErrors is given, any error will output passed the tests.
+/*
+Error asserts that err is one of the expectedErrors.
+If no expectedErrors is given, any error will output passed the tests.
+
+		func TestError(t *testing.T) {
+			is := is.New(t)
+			girl, err := findGirlfriend("Anyone?")
+			is.Error(err, errors.New("really?")) // i give up
+		}
+
+Will output:
+
+		is.Error: girlfriend not found != really? // i give up
+*/
 func (is *Is) Error(err error, expectedErrors ...error) {
 	is.t.Helper()
 	prefix := "is.Error"
+
 	if err == nil {
 		is.logf(is.t.Fail, "%s: <nil>", prefix)
 		return
@@ -163,18 +226,20 @@ func (is *Is) Error(err error, expectedErrors ...error) {
 	is.logf(is.t.Fail, "%s: %q is not in expected errors", prefix, err.Error())
 }
 
-// True asserts that expression is true.
-// The expression code itself will be reported if the assertion fails.
-//
-// 		func TestTrue(t *testing.T) {
-// 			is := is.New(t)
-// 			val := wallet()
-// 			is.True(wallet != 0) // wallet should not be 0
-// 		}
-//
-// Will output:
-//
-// 		wallet != 0 // wallet should not be 0
+/*
+True asserts that expression is true.
+The expression code itself will be reported if the assertion fails.
+
+		func TestTrue(t *testing.T) {
+			is := is.New(t)
+			money := openTheWallet()
+			is.True(money != 0) // money shouldn't be 0 to get a girl
+		}
+
+Will output:
+
+		is.True: money != 0 // money shouldn't be 0 to get a girl
+*/
 func (is *Is) True(expression bool) {
 	is.t.Helper()
 	prefix := "is.True"
@@ -215,7 +280,7 @@ func (is *Is) loadArgument(funcName string) string {
 	return is.arguments[line]
 }
 
-// T is the interface common to testing type.
+// T is the subset of testing.T used by the package is.
 type T interface {
 	Fail()
 	FailNow()
