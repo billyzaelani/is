@@ -97,29 +97,32 @@ Will output:
 func (is *Is) Equal(a, b interface{}) {
 	is.t.Helper()
 	prefix := "is.Equal"
+	skip := 3
 
 	if reflect.DeepEqual(a, b) {
 		return
 	}
 
 	if isNil(a) || isNil(b) {
-		is.logf(is.t.Fail, "%s: %s != %s", prefix, valWithType(a), valWithType(b))
+		is.logf(is.t.Fail, skip, "%s: %s != %s", prefix, valWithType(a), valWithType(b))
 		return
 	}
 
 	if reflect.ValueOf(a).Type() == reflect.ValueOf(b).Type() {
-		is.logf(is.t.Fail, "%s: %v != %v", prefix, a, b)
+		is.logf(is.t.Fail, skip, "%s: %v != %v", prefix, a, b)
 		return
 	}
 
-	is.logf(is.t.Fail, "%s: %s != %s", prefix, valWithType(a), valWithType(b))
+	is.logf(is.t.Fail, skip, "%s: %s != %s", prefix, valWithType(a), valWithType(b))
 }
 
-func (is *Is) logf(failFunc func(), format string, args ...interface{}) {
+// logf report the fail depends on failFunc, either t.Fail or t.FailNow.
+// skip is how deep the function call to reach the actual test.
+func (is *Is) logf(failFunc func(), skip int, format string, args ...interface{}) {
 	is.t.Helper()
 
 	msg := []string{fmt.Sprintf(format, args...)}
-	if comment := is.loadComment(); comment != "" {
+	if comment := is.loadComment(skip); comment != "" {
 		msg = append(msg, comment)
 	}
 	is.t.Log(strings.Join(msg, " "))
@@ -140,8 +143,8 @@ func isNil(obj interface{}) bool {
 	return false
 }
 
-func (is *Is) loadComment() string {
-	_, filename, line, _ := runtime.Caller(3) // level of function call to the actual test
+func (is *Is) loadComment(skip int) string {
+	_, filename, line, _ := runtime.Caller(skip) // level of function call to the actual test
 	if is.comments == nil {
 		is.comments = make(map[int]string)
 		fset := token.NewFileSet()
@@ -176,9 +179,10 @@ Will output:
 func (is *Is) Error(err error, expectedErrors ...error) {
 	is.t.Helper()
 	prefix := "is.Error"
+	skip := 3
 
 	if err == nil {
-		is.logf(is.t.Fail, "%s: <nil>", prefix)
+		is.logf(is.t.Fail, skip, "%s: <nil>", prefix)
 		return
 	}
 
@@ -195,11 +199,11 @@ func (is *Is) Error(err error, expectedErrors ...error) {
 	}
 
 	if lenErr == 1 {
-		is.logf(is.t.Fail, "%s: %s != %s", prefix, err.Error(), expectedErrors[0].Error())
+		is.logf(is.t.Fail, skip, "%s: %s != %s", prefix, err.Error(), expectedErrors[0].Error())
 		return
 	}
 
-	is.logf(is.t.Fail, "%s: %s is not in expected errors", prefix, err.Error())
+	is.logf(is.t.Fail, skip, "%s: %s is not in expected errors", prefix, err.Error())
 }
 
 /*
@@ -220,9 +224,10 @@ Will output:
 func (is *Is) NoError(err error) {
 	is.t.Helper()
 	prefix := "is.NoError"
+	skip := 3
 
 	if err != nil {
-		is.logf(is.t.FailNow, "%s: %s", prefix, err.Error())
+		is.logf(is.t.FailNow, skip, "%s: %s", prefix, err.Error())
 	}
 }
 
@@ -243,13 +248,14 @@ Will output:
 func (is *Is) True(expression bool) {
 	is.t.Helper()
 	prefix := "is.True"
+	skip := 3
 
 	if expression {
 		return
 	}
 
 	args := is.loadArgument("True")
-	is.logf(is.t.Fail, "%s: %s", prefix, args)
+	is.logf(is.t.Fail, skip, "%s: %s", prefix, args)
 }
 
 func (is *Is) loadArgument(funcName string) string {
@@ -290,12 +296,13 @@ func (is *Is) Panic(f PanicFunc) {
 	defer func() {
 		is.t.Helper()
 		prefix := "is.Panic"
+		skip := 4
 
 		if recover() != nil {
 			return
 		}
 
-		is.logf(is.t.Fail, "%s: the function is not panic", prefix)
+		is.logf(is.t.Fail, skip, "%s: the function is not panic", prefix)
 	}()
 
 	f()
