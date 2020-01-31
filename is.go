@@ -280,6 +280,24 @@ func (is *Is) loadArgument(funcName string) string {
 	return is.arguments[line]
 }
 
+// PanicFunc is a function to test that function call is panic or not.
+type PanicFunc func()
+
+// Panic assert that function f is panic.
+func (is *Is) Panic(f PanicFunc) {
+	defer func() {
+		prefix := "is.Panic"
+
+		if recover() != nil {
+			return
+		}
+
+		is.logf(is.t.Fail, "%s: the function is not panic", prefix)
+	}()
+
+	f()
+}
+
 // T is the subset of testing.T used by the package is.
 type T interface {
 	Fail()

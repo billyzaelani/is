@@ -362,6 +362,57 @@ func TestTrue(t *testing.T) {
 	}
 }
 
+func TestPanic(t *testing.T) {
+	prefix := "is.Panic: "
+	tests := []struct {
+		Name  string
+		State failState
+		Msg   string
+		F     func(is *is.Is)
+	}{
+		{
+			Name:  "panic",
+			State: pass,
+			Msg:   ``,
+			F: func(is *is.Is) {
+				panicFunc := func() { panic("i'm panic") }
+				is.Panic(panicFunc)
+			},
+		},
+		{
+			Name:  "not panic",
+			State: fail,
+			Msg:   prefix + `the function is not panic`,
+			F: func(is *is.Is) {
+				calmFunc := func() { _ = "i'm calm" }
+				is.Panic(calmFunc)
+			},
+		},
+		{
+			Name:  "not panic with comment",
+			State: fail,
+			Msg:   prefix + `the function is not panic // with comment`,
+			F: func(is *is.Is) {
+				calmFunc := func() { _ = "i'm calm" }
+				is.Panic(calmFunc) // with comment
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.Name, func(t *testing.T) {
+			m := new(mockT)
+			is := is.New(m)
+			tt.F(is)
+
+			assertState(t, m.state, tt.State)
+			if m.msg != tt.Msg {
+				t.Errorf("%q != %q", m.msg, tt.Msg)
+			}
+		})
+	}
+}
+
 func TestLine(t *testing.T) {
 	tests := []struct {
 		Name string
