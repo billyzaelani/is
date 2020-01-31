@@ -285,7 +285,10 @@ type PanicFunc func()
 
 // Panic assert that function f is panic.
 func (is *Is) Panic(f PanicFunc) {
+	is.t.Helper()
+
 	defer func() {
+		is.t.Helper()
 		prefix := "is.Panic"
 
 		if recover() != nil {

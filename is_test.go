@@ -439,6 +439,11 @@ func TestLine(t *testing.T) {
 			F:    func(is *is.Is) { is.True(1 == 2) },
 			Want: 2,
 		},
+		{
+			Name: "Panic",
+			F:    func(is *is.Is) { is.Panic(func() {}) },
+			Want: 3,
+		},
 	}
 
 	for _, tt := range tests {
