@@ -397,6 +397,33 @@ func TestPanic(t *testing.T) {
 				is.Panic(calmFunc) // with comment
 			},
 		},
+		{
+			Name:  "panic with true panic value",
+			State: pass,
+			Msg:   ``,
+			F: func(is *is.Is) {
+				panicFunc := func() { panic("i'm panic") }
+				is.Panic(panicFunc, "i'm panic", "is this panic")
+			},
+		},
+		{
+			Name:  "panic with false panic value",
+			State: fail,
+			Msg:   prefix + `i'm panic != are you panic`,
+			F: func(is *is.Is) {
+				panicFunc := func() { panic("i'm panic") }
+				is.Panic(panicFunc, "are you panic")
+			},
+		},
+		{
+			Name:  "panic with multiple false panic value",
+			State: fail,
+			Msg:   prefix + `i'm panic is not one of the expected panic value`,
+			F: func(is *is.Is) {
+				panicFunc := func() { panic("i'm panic") }
+				is.Panic(panicFunc, "are you panic", "are you crazy")
+			},
+		},
 	}
 
 	for _, tt := range tests {

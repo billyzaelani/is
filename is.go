@@ -290,20 +290,39 @@ func (is *Is) loadArgument(funcName string) string {
 type PanicFunc func()
 
 // Panic assert that function f is panic.
-func (is *Is) Panic(f PanicFunc) {
+func (is *Is) Panic(f PanicFunc, expectedValues ...interface{}) {
 	is.t.Helper()
 
-	defer func() {
+	defer func(expectedValues ...interface{}) {
 		is.t.Helper()
 		prefix := "is.Panic"
 		skip := 4
 
-		if recover() != nil {
+		r := recover()
+		if r == nil {
+			is.logf(is.t.Fail, skip, "%s: the function is not panic", prefix)
 			return
 		}
 
-		is.logf(is.t.Fail, skip, "%s: the function is not panic", prefix)
-	}()
+		lenVal := len(expectedValues)
+
+		if lenVal == 0 {
+			return
+		}
+
+		for _, v := range expectedValues {
+			if reflect.DeepEqual(r, v) {
+				return
+			}
+		}
+
+		if lenVal == 1 {
+			is.logf(is.t.Fail, skip, "%s: %v != %v", prefix, r, expectedValues[0])
+			return
+		}
+
+		is.logf(is.t.Fail, skip, "%s: %v is not one of the expected panic value", prefix, r)
+	}(expectedValues...)
 
 	f()
 }
