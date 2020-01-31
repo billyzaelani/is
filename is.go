@@ -203,7 +203,7 @@ func (is *Is) Error(err error, expectedErrors ...error) {
 		return
 	}
 
-	is.logf(is.t.Fail, skip, "%s: %s is not in expected errors", prefix, err.Error())
+	is.logf(is.t.Fail, skip, "%s: %s != one of the expected errors", prefix, err.Error())
 }
 
 /*
@@ -321,7 +321,7 @@ func (is *Is) Panic(f PanicFunc, expectedValues ...interface{}) {
 			return
 		}
 
-		is.logf(is.t.Fail, skip, "%s: %v is not one of the expected panic value", prefix, r)
+		is.logf(is.t.Fail, skip, "%s: %v != one of the expected panic values", prefix, r)
 	}(expectedValues...)
 
 	f()

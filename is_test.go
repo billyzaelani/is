@@ -254,7 +254,7 @@ func TestError(t *testing.T) {
 		{
 			Name:  "any error with multiple false expected error",
 			State: fail,
-			Msg:   prefix + `error 1 is not in expected errors`,
+			Msg:   prefix + `error 1 != one of the expected errors`,
 			F: func(is *is.Is) {
 				is.Error(err1, err2, err3)
 			},
@@ -418,7 +418,7 @@ func TestPanic(t *testing.T) {
 		{
 			Name:  "panic with multiple false panic value",
 			State: fail,
-			Msg:   prefix + `i'm panic is not one of the expected panic value`,
+			Msg:   prefix + `i'm panic != one of the expected panic values`,
 			F: func(is *is.Is) {
 				panicFunc := func() { panic("i'm panic") }
 				is.Panic(panicFunc, "are you panic", "are you crazy")
