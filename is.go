@@ -289,7 +289,19 @@ func (is *Is) loadArgument(funcName string) string {
 // PanicFunc is a function to test that function call is panic or not.
 type PanicFunc func()
 
-// Panic assert that function f is panic.
+/*
+Panic assert that function f is panic.
+
+		func TestPanic(t *testing.T) {
+			is := is.New(t)
+			panicFunc := func() { panic("single") }
+			is.Panic(panicFunc, "really panic", "crazy panic") // ok
+		}
+
+Will output:
+
+		is.Panic: single != one of the expected panic values // ok
+*/
 func (is *Is) Panic(f PanicFunc, expectedValues ...interface{}) {
 	is.t.Helper()
 
