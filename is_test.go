@@ -121,6 +121,9 @@ func TestEqual(t *testing.T) {
 
 	is := is.New(new(mockT))
 	for _, tt := range tests {
+		// fix for-range local variable when using t.Parallel that reduces code coverage
+		// see: https://gist.github.com/posener/92a55c4cd441fc5e5e85f27bca008721
+		tt := tt
 		t.Run(tt.Name, func(t *testing.T) {
 			t.Parallel()
 			m := new(mockT)
@@ -170,6 +173,7 @@ func TestNoError(t *testing.T) {
 
 	is := is.New(new(mockT))
 	for _, tt := range tests {
+		tt := tt
 		t.Run(tt.Name, func(t *testing.T) {
 			t.Parallel()
 			m := new(mockT)
@@ -267,6 +271,7 @@ func TestError(t *testing.T) {
 
 	is := is.New(new(mockT))
 	for _, tt := range tests {
+		tt := tt
 		t.Run(tt.Name, func(t *testing.T) {
 			t.Parallel()
 			m := new(mockT)
@@ -356,6 +361,7 @@ func TestTrue(t *testing.T) {
 
 	is := is.New(new(mockT))
 	for _, tt := range tests {
+		tt := tt
 		t.Run(tt.Name, func(t *testing.T) {
 			t.Parallel()
 			m := new(mockT)
@@ -436,6 +442,7 @@ func TestPanic(t *testing.T) {
 
 	is := is.New(new(mockT))
 	for _, tt := range tests {
+		tt := tt
 		t.Run(tt.Name, func(t *testing.T) {
 			t.Parallel()
 			m := new(mockT)
@@ -485,6 +492,7 @@ func TestLine(t *testing.T) {
 
 	is := is.New(new(mockT))
 	for _, tt := range tests {
+		tt := tt
 		t.Run(tt.Name, func(t *testing.T) {
 			t.Parallel()
 			m := new(mockT)
