@@ -81,6 +81,29 @@ func New(t T) *Is {
 }
 
 /*
+New creates new test helper with the new T but reuse the buffer file for faster test.
+Useful when using subtests.
+
+		func TestNew(t *testing.T) {
+			is := is.New(t) // this will load the test file once
+
+			for i := 0; i < 5; i++ {
+				t.Run("test"+i, func(t *testing.T) {
+					is := is.New(t) // this will reuse the buffer from previous helper creation
+					is.True(true)
+				})
+			}
+		}
+*/
+func (is *Is) New(t T) *Is {
+	return &Is{
+		t:         t,
+		comments:  is.comments,
+		arguments: is.arguments,
+	}
+}
+
+/*
 Equal asserts that a and b are equal. Upon failing the test,
 is.Equal also report the data type if a and b has different data type.
 

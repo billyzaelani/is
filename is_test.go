@@ -119,6 +119,7 @@ func TestEqual(t *testing.T) {
 		},
 	}
 
+	is := is.New(new(mockT))
 	for _, tt := range tests {
 		t.Run(tt.Name, func(t *testing.T) {
 			m := new(mockT)
@@ -166,6 +167,7 @@ func TestNoError(t *testing.T) {
 		},
 	}
 
+	is := is.New(new(mockT))
 	for _, tt := range tests {
 		t.Run(tt.Name, func(t *testing.T) {
 			m := new(mockT)
@@ -261,6 +263,7 @@ func TestError(t *testing.T) {
 		},
 	}
 
+	is := is.New(new(mockT))
 	for _, tt := range tests {
 		t.Run(tt.Name, func(t *testing.T) {
 			m := new(mockT)
@@ -348,6 +351,7 @@ func TestTrue(t *testing.T) {
 		},
 	}
 
+	is := is.New(new(mockT))
 	for _, tt := range tests {
 		t.Run(tt.Name, func(t *testing.T) {
 			m := new(mockT)
@@ -426,6 +430,7 @@ func TestPanic(t *testing.T) {
 		},
 	}
 
+	is := is.New(new(mockT))
 	for _, tt := range tests {
 		t.Run(tt.Name, func(t *testing.T) {
 			m := new(mockT)
@@ -473,6 +478,7 @@ func TestLine(t *testing.T) {
 		},
 	}
 
+	is := is.New(new(mockT))
 	for _, tt := range tests {
 		t.Run(tt.Name, func(t *testing.T) {
 			m := new(mockT)
