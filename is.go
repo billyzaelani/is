@@ -28,6 +28,7 @@ The example below shows some useful ways to use package is in your test:
 
 		import (
 			"errors"
+			"os"
 			"strconv"
 			"testing"
 
@@ -46,7 +47,11 @@ The example below shows some useful ways to use package is in your test:
 
 			j, err = strconv.Atoi("forty two")
 			is.Error(err, errors.New("expected errors")) // the error is not expected
-			is.NoError(err)                              // we got some error here
+
+			var pathError *os.PathError
+			is.ErrorAs(err, &pathError) // err != **os.PathError
+
+			is.NoError(err) // we got some error here
 
 			// the code below is not executed because is.NoError uses
 			// t.FailNow upon failing the test
