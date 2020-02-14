@@ -286,6 +286,55 @@ func TestError(t *testing.T) {
 	}
 }
 
+type QueryError struct{ Query string }
+
+func (e *QueryError) Error() string { return "query: " + e.Query }
+
+func TestErrorAs(t *testing.T) {
+	prefix := "is.ErrorAs: "
+	tests := []struct {
+		Name  string
+		State failState
+		Msg   string
+		F     func(is *is.Is)
+	}{
+		{
+			Name:  "pass",
+			State: pass,
+			Msg:   ``,
+			F: func(is *is.Is) {
+				var queryError *QueryError
+				is.ErrorAs(&QueryError{"SELECT column_name(s) FROM table_name"}, &queryError)
+			},
+		},
+		{
+			Name:  "fail",
+			State: fail,
+			Msg:   prefix + `err != **is_test.QueryError // it's something else`,
+			F: func(is *is.Is) {
+				var queryError *QueryError
+				is.ErrorAs(errors.New("it's not query error"), &queryError) // it's something else
+			},
+		},
+	}
+
+	is := is.New(new(mockT))
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.Name, func(t *testing.T) {
+			t.Parallel()
+			m := new(mockT)
+			is := is.New(m)
+			tt.F(is)
+
+			assertState(t, m.state, tt.State)
+			if m.msg != tt.Msg {
+				t.Errorf("%q != %q", m.msg, tt.Msg)
+			}
+		})
+	}
+}
+
 func TestTrue(t *testing.T) {
 	prefix := "is.True: "
 	tests := []struct {
@@ -476,6 +525,14 @@ func TestLine(t *testing.T) {
 		{
 			Name: "Error",
 			F:    func(is *is.Is) { is.Error(nil) },
+			Want: 2,
+		},
+		{
+			Name: "ErrorAs",
+			F: func(is *is.Is) {
+				var queryError *QueryError
+				is.ErrorAs(errors.New("it's not query error"), &queryError)
+			},
 			Want: 2,
 		},
 		{

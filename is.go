@@ -231,6 +231,32 @@ func (is *Is) Error(err error, expectedErrors ...error) {
 }
 
 /*
+ErrorAs asserts that err as target.
+Same definition as errors.As.
+
+		func TestNoError(t *testing.T) {
+			is := is.New(t)
+			err := errors.New("find a way her heart")
+			var pathError *os.PathError
+			is.ErrorAs(err, &pathError) // where should I go?
+		}
+
+Will output:
+
+		is.ErrorAs: err != **os.PathError // where should I go?
+*/
+func (is *Is) ErrorAs(err error, target interface{}) {
+	is.t.Helper()
+	prefix := "is.ErrorAs"
+	skip := 3
+
+	if !errors.As(err, target) {
+		is.logf(is.t.Fail, skip, "%s: err != %T", prefix, target)
+		return
+	}
+}
+
+/*
 NoError assert that err is nil. Upon failing the test,
 is.NoError uses t.FailNow so its stop the execution.
 
