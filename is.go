@@ -57,6 +57,7 @@ The example below shows some useful ways to use package is in your test:
 package is
 
 import (
+	"errors"
 	"fmt"
 	"go/ast"
 	"go/parser"
@@ -216,7 +217,7 @@ func (is *Is) Error(err error, expectedErrors ...error) {
 	}
 
 	for _, expectedError := range expectedErrors {
-		if err == expectedError {
+		if errors.Is(err, expectedError) {
 			return
 		}
 	}
