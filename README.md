@@ -34,8 +34,11 @@ import (
     "strconv"
     "testing"
 
-    "github.com/billyzaelani/is"
+    assert "github.com/billyzaelani/is"
 )
+
+// load test file upfront
+var is = assert.New(nil)
 
 func TestIs(t *testing.T) {
     // always start tests with this

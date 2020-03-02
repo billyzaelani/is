@@ -32,8 +32,11 @@ The example below shows some useful ways to use package is in your test:
 			"strconv"
 			"testing"
 
-			"github.com/billyzaelani/is"
+			assert "github.com/billyzaelani/is"
 		)
+
+		// load test file upfront
+		var is = assert.New(nil)
 
 		func TestIs(t *testing.T) {
 			// always start tests with this
@@ -62,32 +65,26 @@ package is
 
 import (
 	"errors"
-	"fmt"
-	"go/ast"
-	"go/parser"
-	"go/printer"
-	"go/token"
 	"reflect"
-	"runtime"
-	"strings"
 )
 
 // Is is the test helper.
 type Is struct {
 	t         T
-	comments  map[int]string // k:line, v:comment
-	arguments map[int]string // k:line, v:argument
+	comments  map[string]map[int]string
+	arguments map[string]map[int]string
 }
 
-// New makes a new test helper given by T. Any failures will
-// reported onto T. Most of the time T will be testing.T from the stdlib.
+// New makes a new test helper given by T and load necessary buffer from test file.
+// Any failures will reported onto T. Most of the time T will be testing.T from the stdlib.
 func New(t T) *Is {
-	return &Is{t: t}
+	is := &Is{t: t}
+	is.load()
+	return is
 }
 
 /*
 New creates new test helper with the new T but reuse the buffer file for faster test.
-Useful when using subtests.
 
 		func TestNew(t *testing.T) {
 			is := is.New(t) // this will load the test file once
@@ -142,52 +139,6 @@ func (is *Is) Equal(a, b interface{}) {
 	}
 
 	is.logf(is.t.Fail, skip, "%s: %s != %s", prefix, valWithType(a), valWithType(b))
-}
-
-// logf report the fail depends on failFunc, either t.Fail or t.FailNow.
-// skip is how deep the function call to reach the actual test.
-func (is *Is) logf(failFunc func(), skip int, format string, args ...interface{}) {
-	is.t.Helper()
-
-	msg := []string{fmt.Sprintf(format, args...)}
-	if comment := is.loadComment(skip); comment != "" {
-		msg = append(msg, comment)
-	}
-	is.t.Log(strings.Join(msg, " "))
-	failFunc()
-}
-
-func valWithType(v interface{}) string {
-	if isNil(v) {
-		return "<nil>"
-	}
-	return fmt.Sprintf("%[1]T(%[1]v)", v)
-}
-
-func isNil(obj interface{}) bool {
-	if obj == nil {
-		return true
-	}
-	return false
-}
-
-func (is *Is) loadComment(skip int) string {
-	_, filename, line, _ := runtime.Caller(skip) // level of function call to the actual test
-	if is.comments == nil {
-		is.comments = make(map[int]string)
-		fset := token.NewFileSet()
-		f, err := parser.ParseFile(fset, filename, nil, parser.ParseComments)
-		if err != nil {
-			panic(err)
-		}
-
-		for _, s := range f.Comments {
-			line := fset.Position(s.Pos()).Line
-			is.comments[line] = "// " + strings.TrimSpace(s.Text())
-		}
-	}
-
-	return is.comments[line]
 }
 
 /*
@@ -309,40 +260,9 @@ func (is *Is) True(expression bool) {
 		return
 	}
 
-	args := is.loadArgument("True")
+	args := is.loadArgument()
 	is.logf(is.t.Fail, skip, "%s: %s", prefix, args)
 }
-
-func (is *Is) loadArgument(funcName string) string {
-	_, filename, line, _ := runtime.Caller(2) // level of function call to the actual test
-	if is.arguments == nil {
-		is.arguments = make(map[int]string)
-		fset := token.NewFileSet()
-		f, err := parser.ParseFile(fset, filename, nil, parser.AllErrors)
-		if err != nil {
-			panic(err)
-		}
-		ast.Inspect(f, func(n ast.Node) bool {
-			ret, ok := n.(*ast.CallExpr)
-			if ok {
-				var str strings.Builder
-				printer.Fprint(&str, fset, ret)
-				if expr := str.String(); strings.Contains(expr, funcName) {
-					line := fset.Position(ret.Pos()).Line
-					args := strings.ReplaceAll(expr, "\n\t", " ")
-					args = args[ret.Lparen-ret.Pos()+1 : len(args)-1]
-					is.arguments[line] = args
-				}
-			}
-			return true
-		})
-	}
-
-	return is.arguments[line]
-}
-
-// PanicFunc is a function to test that function call is panic or not.
-type PanicFunc func()
 
 /*
 Panic assert that function f is panic.
@@ -393,6 +313,9 @@ func (is *Is) Panic(f PanicFunc, expectedValues ...interface{}) {
 
 	f()
 }
+
+// PanicFunc is a function to test that function call is panic or not.
+type PanicFunc func()
 
 // T is the subset of testing.T used by the package is.
 type T interface {
