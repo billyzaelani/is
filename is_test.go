@@ -204,7 +204,7 @@ func TestError(t *testing.T) {
 	}{
 		{
 			Name:  "nil error",
-			State: fail,
+			State: failNow,
 			Msg:   prefix + `<nil>`,
 			F: func(is *is.Is) {
 				var err error
@@ -213,7 +213,7 @@ func TestError(t *testing.T) {
 		},
 		{
 			Name:  "nil error with comment",
-			State: fail,
+			State: failNow,
 			Msg:   prefix + `<nil> // shouldn't be nil`,
 			F: func(is *is.Is) {
 				var err error
@@ -228,7 +228,7 @@ func TestError(t *testing.T) {
 		},
 		{
 			Name:  "nil with expected error",
-			State: fail,
+			State: failNow,
 			Msg:   prefix + `<nil>`,
 			F: func(is *is.Is) {
 				var err error
@@ -253,7 +253,7 @@ func TestError(t *testing.T) {
 		},
 		{
 			Name:  "any error with false expected error",
-			State: fail,
+			State: failNow,
 			Msg:   prefix + `error 1 != error 2`,
 			F: func(is *is.Is) {
 				is.Error(err1, err2)
@@ -261,7 +261,7 @@ func TestError(t *testing.T) {
 		},
 		{
 			Name:  "any error with multiple false expected error",
-			State: fail,
+			State: failNow,
 			Msg:   prefix + `error 1 != one of the expected errors`,
 			F: func(is *is.Is) {
 				is.Error(err1, err2, err3)
@@ -309,7 +309,7 @@ func TestErrorAs(t *testing.T) {
 		},
 		{
 			Name:  "fail",
-			State: fail,
+			State: failNow,
 			Msg:   prefix + `err != **is_test.QueryError // it's something else`,
 			F: func(is *is.Is) {
 				var queryError *QueryError

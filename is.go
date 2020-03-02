@@ -46,15 +46,14 @@ The example below shows some useful ways to use package is in your test:
 			is.True(i == 46) // printed the expression code upon failing the test
 
 			j, err = strconv.Atoi("forty two")
-			is.Error(err, errors.New("expected errors")) // the error is not expected
+			is.Error(err)
 
 			var pathError *os.PathError
 			is.ErrorAs(err, &pathError) // err != **os.PathError
 
-			is.NoError(err) // we got some error here
-
-			// the code below is not executed because is.NoError uses
+			// the code below is not executed because is.ErrorAs uses
 			// t.FailNow upon failing the test
+			// is.Error and is.NoError also use t.FailNow upon failing the test
 			is.True(j)
 		}
 
@@ -193,7 +192,9 @@ func (is *Is) loadComment(skip int) string {
 
 /*
 Error asserts that err is one of the expectedErrors.
+Error uses errors.Is to test the error.
 If no expectedErrors is given, any error will output passed the tests.
+Error uses t.FailNow upon failing the test.
 
 		func TestError(t *testing.T) {
 			is := is.New(t)
@@ -211,7 +212,7 @@ func (is *Is) Error(err error, expectedErrors ...error) {
 	skip := 3
 
 	if err == nil {
-		is.logf(is.t.Fail, skip, "%s: <nil>", prefix)
+		is.logf(is.t.FailNow, skip, "%s: <nil>", prefix)
 		return
 	}
 
@@ -228,16 +229,16 @@ func (is *Is) Error(err error, expectedErrors ...error) {
 	}
 
 	if lenErr == 1 {
-		is.logf(is.t.Fail, skip, "%s: %s != %s", prefix, err.Error(), expectedErrors[0].Error())
+		is.logf(is.t.FailNow, skip, "%s: %s != %s", prefix, err.Error(), expectedErrors[0].Error())
 		return
 	}
 
-	is.logf(is.t.Fail, skip, "%s: %s != one of the expected errors", prefix, err.Error())
+	is.logf(is.t.FailNow, skip, "%s: %s != one of the expected errors", prefix, err.Error())
 }
 
 /*
-ErrorAs asserts that err as target.
-Same definition as errors.As.
+ErrorAs asserts that err as target. ErrorAs uses errors.As to test the error.
+ErrorAs uses t.FailNow upon failing the test.
 
 		func TestNoError(t *testing.T) {
 			is := is.New(t)
@@ -256,14 +257,13 @@ func (is *Is) ErrorAs(err error, target interface{}) {
 	skip := 3
 
 	if !errors.As(err, target) {
-		is.logf(is.t.Fail, skip, "%s: err != %T", prefix, target)
+		is.logf(is.t.FailNow, skip, "%s: err != %T", prefix, target)
 		return
 	}
 }
 
 /*
-NoError assert that err is nil. Upon failing the test,
-is.NoError uses t.FailNow so its stop the execution.
+NoError assert that err is nil. NoError uses t.FailNow upon failing the test.
 
 		func TestNoError(t *testing.T) {
 			is := is.New(t)

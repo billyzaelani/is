@@ -48,15 +48,14 @@ func TestIs(t *testing.T) {
     is.True(i == 46) // printed the expression code upon failing the test
 
     j, err = strconv.Atoi("forty two")
-    is.Error(err, errors.New("expected errors")) // the error is not expected
+    is.Error(err)
 
     var pathError *os.PathError
     is.ErrorAs(err, &pathError) // err != **os.PathError
 
-    is.NoError(err) // we got some error here
-
-    // the code below is not executed because is.NoError uses
+    // the code below is not executed because is.ErrorAs uses
     // t.FailNow upon failing the test
+    // is.Error and is.NoError also use t.FailNow upon failing the test
     is.True(j)
 }
 ```
