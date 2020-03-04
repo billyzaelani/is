@@ -558,3 +558,31 @@ func TestLine(t *testing.T) {
 		})
 	}
 }
+
+func TestHelperPanic(t *testing.T) {
+	tests := []struct {
+		Name string
+		F    func()
+	}{
+		{"is.Equal panic", func() { is.Equal(1, 1) }},
+		{"is.NoError panic", func() { is.NoError(nil) }},
+		{"is.Error panic", func() { is.Error(nil) }},
+		{"is.ErrorAs panic", func() { is.ErrorAs(nil, nil) }},
+		{"is.True panic", func() { is.True(false) }},
+		{"is.Panic panic", func() { is.Panic(nil) }},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.Name, func(t *testing.T) {
+			defer func() {
+				errMsg := "is: T is nil"
+				if err := recover(); err != errMsg {
+					t.Errorf("%q != %q", err, errMsg)
+				}
+			}()
+
+			tt.F()
+		})
+	}
+}

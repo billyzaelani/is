@@ -120,6 +120,10 @@ Will output:
 		is.Equal: string(hello girl) != bool(false) // seduce a girl
 */
 func (is *Is) Equal(a, b interface{}) {
+	if is.t == nil {
+		panic("is: T is nil")
+	}
+
 	is.t.Helper()
 	prefix := "is.Equal"
 	skip := 3
@@ -158,6 +162,10 @@ Will output:
 		is.Error: get a girlfriend as programmer? != coding // its not easy
 */
 func (is *Is) Error(err error, expectedErrors ...error) {
+	if is.t == nil {
+		panic("is: T is nil")
+	}
+
 	is.t.Helper()
 	prefix := "is.Error"
 	skip := 3
@@ -203,6 +211,10 @@ Will output:
 		is.ErrorAs: err != **os.PathError // where should I go?
 */
 func (is *Is) ErrorAs(err error, target interface{}) {
+	if is.t == nil {
+		panic("is: T is nil")
+	}
+
 	is.t.Helper()
 	prefix := "is.ErrorAs"
 	skip := 3
@@ -228,6 +240,10 @@ Will output:
 		is.NoError: girlfriend not found // i give up
 */
 func (is *Is) NoError(err error) {
+	if is.t == nil {
+		panic("is: T is nil")
+	}
+
 	is.t.Helper()
 	prefix := "is.NoError"
 	skip := 3
@@ -252,6 +268,10 @@ Will output:
 		is.True: money != 0 // money shouldn't be 0 to get a girl
 */
 func (is *Is) True(expression bool) {
+	if is.t == nil {
+		panic("is: T is nil")
+	}
+
 	is.t.Helper()
 	prefix := "is.True"
 	skip := 3
@@ -278,6 +298,10 @@ Will output:
 		is.Panic: single != one of the expected panic values // ok
 */
 func (is *Is) Panic(f PanicFunc, expectedValues ...interface{}) {
+	if is.t == nil {
+		panic("is: T is nil")
+	}
+
 	is.t.Helper()
 
 	defer func(expectedValues ...interface{}) {
