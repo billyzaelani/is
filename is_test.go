@@ -2,139 +2,55 @@ package is_test
 
 import (
 	"errors"
-	"fmt"
 	"testing"
 
 	assert "github.com/billyzaelani/is"
 )
 
-var errWrong = errors.New("something's wrong")
-
-type mockT struct {
-	state       failState
-	msg         string
-	helperCount int
-}
-
-func (m *mockT) Fail()                   { m.state = fail }
-func (m *mockT) FailNow()                { m.state = failNow }
-func (m *mockT) Log(args ...interface{}) { m.msg = fmt.Sprint(args...) }
-func (m *mockT) Helper()                 { m.helperCount++ }
-
-type failState int
-
-const (
-	pass failState = iota
-	fail
-	failNow
-)
-
-func (f failState) String() string {
-	var state string
-	switch f {
-	case pass:
-		state = "passed"
-	case fail:
-		state = "failed"
-	case failNow:
-		state = "failed now"
-	}
-	return state
-}
-
-func assertState(t *testing.T, got, want failState) {
-	t.Helper()
-	if got != want {
-		t.Fatalf("the tests should be %s", want)
-	}
-}
-
-// load the test file upfront
+// load the test file upfront with nil T
 var is = assert.New(nil)
 
 func TestEqual(t *testing.T) {
 	prefix := "is.Equal: "
 	tests := []struct {
-		Name  string
-		State failState
-		Msg   string
-		F     func(is *assert.Is)
+		desc  string
+		state failState
+		msg   string
+		f     func(is *assert.Is)
 	}{
-		{
-			Name:  "equal",
-			State: pass,
-			Msg:   ``,
-			F:     func(is *assert.Is) { is.Equal(1, 1) },
-		},
-		{
-			Name:  "not equal",
-			State: fail,
-			Msg:   prefix + `1 != 2`,
-			F:     func(is *assert.Is) { is.Equal(1, 2) },
-		},
-		{
-			Name:  "both nil",
-			State: pass,
-			Msg:   ``,
-			F:     func(is *assert.Is) { is.Equal(nil, nil) },
-		},
-		{
-			Name:  "different data type",
-			State: fail,
-			Msg:   prefix + `int(3) != bool(false)`,
-			F:     func(is *assert.Is) { is.Equal(3, false) },
-		},
-		{
-			Name:  "specific integer",
-			State: fail,
-			Msg:   prefix + `int32(1) != int64(2)`,
-			F:     func(is *assert.Is) { is.Equal(int32(1), int64(2)) },
-		},
-		{
-			Name:  "with nil",
-			State: fail,
-			Msg:   prefix + `<nil> != string(nil)`,
-			F:     func(is *assert.Is) { is.Equal(nil, "nil") },
-		},
-		{
-			Name:  "nil slice",
-			State: fail,
-			Msg:   prefix + `[] != [one two]`,
-			F: func(is *assert.Is) {
-				var a []string
-				b := []string{"one", "two"}
-				is.Equal(a, b)
-			},
-		},
-		{
-			Name:  "nil with slice",
-			State: fail,
-			Msg:   prefix + `<nil> != []string([one two])`,
-			F:     func(is *assert.Is) { is.Equal(nil, []string{"one", "two"}) },
-		},
-		{
-			Name:  "with comment",
-			State: fail,
-			Msg:   prefix + `foo != bar // foo is not bar`,
-			F: func(is *assert.Is) {
-				is.Equal("foo", "bar") // foo is not bar
-			},
-		},
+		{"equal", pass, ``,
+			func(is *assert.Is) { is.Equal(1, 1) }},
+		{"not equal", fail, prefix + `1 != 2`,
+			func(is *assert.Is) { is.Equal(1, 2) }},
+		{"both nil", pass, ``,
+			func(is *assert.Is) { is.Equal(nil, nil) }},
+		{"different data type", fail, prefix + `int(3) != bool(false)`,
+			func(is *assert.Is) { is.Equal(3, false) }},
+		{"specific integer", fail, prefix + `int32(1) != int64(2)`,
+			func(is *assert.Is) { is.Equal(int32(1), int64(2)) }},
+		{"with nil", fail, prefix + `<nil> != string(nil)`,
+			func(is *assert.Is) { is.Equal(nil, "nil") }},
+		{"nil slice", fail, prefix + `[] != [one two]`,
+			func(is *assert.Is) { is.Equal([]string{}, []string{"one", "two"}) }},
+		{"nil with slice", fail, prefix + `<nil> != []string([one two])`,
+			func(is *assert.Is) { is.Equal(nil, []string{"one", "two"}) }},
+		{"with comment", fail, prefix + `foo != bar // foo is not bar`,
+			func(is *assert.Is) { is.Equal("foo", "bar") /* foo is not bar */ }},
 	}
 
 	for _, tt := range tests {
 		// fix for-range local variable when using t.Parallel that reduces code coverage
 		// see: https://gist.github.com/posener/92a55c4cd441fc5e5e85f27bca008721
 		tt := tt
-		t.Run(tt.Name, func(t *testing.T) {
+		t.Run(tt.desc, func(t *testing.T) {
 			t.Parallel()
 			m := new(mockT)
 			is := is.New(m)
-			tt.F(is)
+			tt.f(is)
 
-			assertState(t, m.state, tt.State)
-			if m.msg != tt.Msg {
-				t.Errorf("%q != %q", m.msg, tt.Msg)
+			assertState(t, m.state, tt.state)
+			if m.msg != tt.msg {
+				t.Errorf("%q != %q", m.msg, tt.msg)
 			}
 		})
 	}
@@ -143,192 +59,108 @@ func TestEqual(t *testing.T) {
 func TestNoError(t *testing.T) {
 	prefix := "is.NoError: "
 	tests := []struct {
-		Name  string
-		State failState
-		Msg   string
-		F     func(is *assert.Is)
+		name  string
+		state failState
+		msg   string
+		f     func(is *assert.Is)
 	}{
-		{
-			Name:  "no error",
-			State: pass,
-			Msg:   ``,
-			F: func(is *assert.Is) {
-				var err error
-				is.NoError(err)
-			},
-		},
-		{
-			Name:  "error",
-			State: failNow,
-			Msg:   prefix + `something's wrong`,
-			F:     func(is *assert.Is) { is.NoError(errWrong) },
-		},
-		{
-			Name:  "error with comment",
-			State: failNow,
-			Msg:   prefix + `something's wrong // shouldn't be error`,
-			F: func(is *assert.Is) {
-				is.NoError(errWrong) // shouldn't be error
-			},
-		},
+		{"no error", pass, ``,
+			func(is *assert.Is) { is.NoError(nil) }},
+		{"error", failNow, prefix + `something's wrong`,
+			func(is *assert.Is) { is.NoError(errWrong) }},
+		{"error with comment", failNow, prefix + `something's wrong // shouldn't be error`,
+			func(is *assert.Is) { is.NoError(errWrong) /* shouldn't be error*/ }},
 	}
 
 	for _, tt := range tests {
 		tt := tt
-		t.Run(tt.Name, func(t *testing.T) {
+		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			m := new(mockT)
 			is := is.New(m)
-			tt.F(is)
+			tt.f(is)
 
-			assertState(t, m.state, tt.State)
-			if m.msg != tt.Msg {
-				t.Errorf("got: %s, want: %s", m.msg, tt.Msg)
+			assertState(t, m.state, tt.state)
+			if m.msg != tt.msg {
+				t.Errorf("got: %s, want: %s", m.msg, tt.msg)
 			}
 		})
 	}
 }
-
-var (
-	err1 = errors.New("error 1")
-	err2 = errors.New("error 2")
-	err3 = errors.New("error 3")
-)
 
 func TestError(t *testing.T) {
 	prefix := "is.Error: "
 	tests := []struct {
-		Name  string
-		State failState
-		Msg   string
-		F     func(is *assert.Is)
+		name  string
+		state failState
+		msg   string
+		f     func(is *assert.Is)
 	}{
-		{
-			Name:  "nil error",
-			State: failNow,
-			Msg:   prefix + `<nil>`,
-			F: func(is *assert.Is) {
-				var err error
-				is.Error(err)
-			},
-		},
-		{
-			Name:  "nil error with comment",
-			State: failNow,
-			Msg:   prefix + `<nil> // shouldn't be nil`,
-			F: func(is *assert.Is) {
-				var err error
-				is.Error(err) // shouldn't be nil
-			},
-		},
-		{
-			Name:  "any error",
-			State: pass,
-			Msg:   ``,
-			F:     func(is *assert.Is) { is.Error(err1) },
-		},
-		{
-			Name:  "nil with expected error",
-			State: failNow,
-			Msg:   prefix + `<nil>`,
-			F: func(is *assert.Is) {
-				var err error
-				is.Error(err, err1)
-			},
-		},
-		{
-			Name:  "any error with true expected error",
-			State: pass,
-			Msg:   ``,
-			F: func(is *assert.Is) {
-				is.Error(err1, err1)
-			},
-		},
-		{
-			Name:  "any error with multiple true expected error",
-			State: pass,
-			Msg:   ``,
-			F: func(is *assert.Is) {
-				is.Error(err2, err1, err2, err3)
-			},
-		},
-		{
-			Name:  "any error with false expected error",
-			State: failNow,
-			Msg:   prefix + `error 1 != error 2`,
-			F: func(is *assert.Is) {
-				is.Error(err1, err2)
-			},
-		},
-		{
-			Name:  "any error with multiple false expected error",
-			State: failNow,
-			Msg:   prefix + `error 1 != one of the expected errors`,
-			F: func(is *assert.Is) {
-				is.Error(err1, err2, err3)
-			},
-		},
+		{"nil error", failNow, prefix + `<nil>`,
+			func(is *assert.Is) { is.Error(nil) }},
+		{"nil error with comment", failNow, prefix + `<nil> // shouldn't be nil`,
+			func(is *assert.Is) { is.Error(nil) /* shouldn't be nil*/ }},
+		{"any error", pass, ``,
+			func(is *assert.Is) { is.Error(err1) }},
+		{"nil with expected error", failNow, prefix + `<nil>`,
+			func(is *assert.Is) { is.Error(nil, err1) }},
+		{"any error with true expected error", pass, ``,
+			func(is *assert.Is) { is.Error(err1, err1) }},
+		{"any error with multiple true expected error", pass, ``,
+			func(is *assert.Is) { is.Error(err2, err1, err2, err3) }},
+		{"any error with false expected error", failNow, prefix + `error 1 != error 2`,
+			func(is *assert.Is) { is.Error(err1, err2) }},
+		{"any error with multiple false expected error", failNow, prefix + `error 1 != one of the expected errors`,
+			func(is *assert.Is) { is.Error(err1, err2, err3) }},
 	}
 
 	for _, tt := range tests {
 		tt := tt
-		t.Run(tt.Name, func(t *testing.T) {
+		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			m := new(mockT)
 			is := is.New(m)
-			tt.F(is)
+			tt.f(is)
 
-			assertState(t, m.state, tt.State)
-			if m.msg != tt.Msg {
-				t.Errorf("got: %s, want: %s", m.msg, tt.Msg)
+			assertState(t, m.state, tt.state)
+			if m.msg != tt.msg {
+				t.Errorf("got: %s, want: %s", m.msg, tt.msg)
 			}
 		})
 	}
 }
 
-type QueryError struct{ Query string }
-
-func (e *QueryError) Error() string { return "query: " + e.Query }
-
 func TestErrorAs(t *testing.T) {
 	prefix := "is.ErrorAs: "
 	tests := []struct {
-		Name  string
-		State failState
-		Msg   string
-		F     func(is *assert.Is)
+		name  string
+		state failState
+		msg   string
+		f     func(is *assert.Is)
 	}{
-		{
-			Name:  "pass",
-			State: pass,
-			Msg:   ``,
-			F: func(is *assert.Is) {
-				var queryError *QueryError
-				is.ErrorAs(&QueryError{"SELECT column_name(s) FROM table_name"}, &queryError)
-			},
-		},
-		{
-			Name:  "fail",
-			State: failNow,
-			Msg:   prefix + `err != **is_test.QueryError // it's something else`,
-			F: func(is *assert.Is) {
-				var queryError *QueryError
-				is.ErrorAs(errors.New("it's not query error"), &queryError) // it's something else
-			},
-		},
+		{"pass", pass, ``,
+			func(is *assert.Is) {
+				var e *QueryError
+				is.ErrorAs(&QueryError{"SELECT column_name(s) FROM table_name"}, &e)
+			}},
+		{"fail", failNow, prefix + `err != **is_test.QueryError // it's something else`,
+			func(is *assert.Is) {
+				var e *QueryError
+				is.ErrorAs(errors.New("it's not query error"), &e) // it's something else
+			}},
 	}
 
 	for _, tt := range tests {
 		tt := tt
-		t.Run(tt.Name, func(t *testing.T) {
+		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			m := new(mockT)
 			is := is.New(m)
-			tt.F(is)
+			tt.f(is)
 
-			assertState(t, m.state, tt.State)
-			if m.msg != tt.Msg {
-				t.Errorf("%q != %q", m.msg, tt.Msg)
+			assertState(t, m.state, tt.state)
+			if m.msg != tt.msg {
+				t.Errorf("%q != %q", m.msg, tt.msg)
 			}
 		})
 	}
@@ -337,87 +169,53 @@ func TestErrorAs(t *testing.T) {
 func TestTrue(t *testing.T) {
 	prefix := "is.True: "
 	tests := []struct {
-		Name  string
-		State failState
-		Msg   string
-		F     func(is *assert.Is)
+		name  string
+		state failState
+		msg   string
+		f     func(is *assert.Is)
 	}{
-		{
-			Name:  "true",
-			State: pass,
-			Msg:   ``,
-			F: func(is *assert.Is) {
-				is.True(1 == 1) // true
-			},
-		},
-		{
-			Name:  "false",
-			State: fail,
-			Msg:   prefix + `1 == 2 // comment`,
-			F: func(is *assert.Is) {
-				is.True(1 == 2) // comment
-			},
-		},
-		{
-			Name:  "extra parentheses",
-			State: fail,
-			Msg:   prefix + `(1 == 2) // comment`,
-			F: func(is *assert.Is) {
-				is.True((1 == 2)) // comment
-			},
-		},
-		{
-			Name:  "new line",
-			State: fail,
-			Msg:   prefix + `(1 == 2) && false`,
-			F: func(is *assert.Is) {
+		{"true", pass, ``,
+			func(is *assert.Is) { is.True(1 == 1) }},
+		{"false", fail, prefix + `1 == 2 // false`,
+			func(is *assert.Is) { is.True(1 == 2) /* false*/ }},
+		{"extra parentheses", fail, prefix + `(1 == 2) // comment`,
+			func(is *assert.Is) { is.True((1 == 2)) /* comment */ }},
+		{"new line", fail, prefix + `(1 == 2) && false`,
+			func(is *assert.Is) {
 				is.True((1 == 2) &&
 					false)
-			},
-		},
-		{
-			Name:  "multi line",
-			State: fail,
-			Msg:   prefix + `(1 == 2) && false || false`,
-			F: func(is *assert.Is) {
+			}},
+		{"multi line", fail, prefix + `(1 == 2) && false || false`,
+			func(is *assert.Is) {
 				is.True((1 == 2) &&
 					false ||
 					false)
-			},
-		},
-		{
-			Name:  "multi line with comment in first line",
-			State: fail,
-			Msg:   prefix + `(1 == 2) && false || false // comment`,
-			F: func(is *assert.Is) {
+			}},
+		{"multi line with comment in first line", fail, prefix + `(1 == 2) && false || false // comment`,
+			func(is *assert.Is) {
 				is.True((1 == 2) && // comment
 					false ||
 					false)
-			},
-		},
-		{
-			Name:  "multi line with comment in non-first line",
-			State: fail,
-			Msg:   prefix + `(1 == 2) && false || false`,
-			F: func(is *assert.Is) {
+			}},
+		{"multi line with comment in non-first line", fail, prefix + `(1 == 2) && false || false`,
+			func(is *assert.Is) {
 				is.True((1 == 2) &&
 					false || // cannot be printed
 					false)
-			},
-		},
+			}},
 	}
 
 	for _, tt := range tests {
 		tt := tt
-		t.Run(tt.Name, func(t *testing.T) {
+		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			m := new(mockT)
 			is := is.New(m)
-			tt.F(is)
+			tt.f(is)
 
-			assertState(t, m.state, tt.State)
-			if m.msg != tt.Msg {
-				t.Errorf("%q != %q", m.msg, tt.Msg)
+			assertState(t, m.state, tt.state)
+			if m.msg != tt.msg {
+				t.Errorf("%q != %q", m.msg, tt.msg)
 			}
 		})
 	}
@@ -426,78 +224,54 @@ func TestTrue(t *testing.T) {
 func TestPanic(t *testing.T) {
 	prefix := "is.Panic: "
 	tests := []struct {
-		Name  string
-		State failState
-		Msg   string
-		F     func(is *assert.Is)
+		name  string
+		state failState
+		msg   string
+		f     func(is *assert.Is)
 	}{
-		{
-			Name:  "panic",
-			State: pass,
-			Msg:   ``,
-			F: func(is *assert.Is) {
+		{"panic", pass, ``,
+			func(is *assert.Is) {
 				panicFunc := func() { panic("i'm panic") }
 				is.Panic(panicFunc)
-			},
-		},
-		{
-			Name:  "not panic",
-			State: fail,
-			Msg:   prefix + `the function is not panic`,
-			F: func(is *assert.Is) {
+			}},
+		{"not panic", fail, prefix + `the function is not panic`,
+			func(is *assert.Is) {
 				calmFunc := func() { _ = "i'm calm" }
 				is.Panic(calmFunc)
-			},
-		},
-		{
-			Name:  "not panic with comment",
-			State: fail,
-			Msg:   prefix + `the function is not panic // with comment`,
-			F: func(is *assert.Is) {
+			}},
+		{"not panic with comment", fail, prefix + `the function is not panic // with comment`,
+			func(is *assert.Is) {
 				calmFunc := func() { _ = "i'm calm" }
 				is.Panic(calmFunc) // with comment
-			},
-		},
-		{
-			Name:  "panic with true panic value",
-			State: pass,
-			Msg:   ``,
-			F: func(is *assert.Is) {
+			}},
+		{"panic with true panic value", pass, ``,
+			func(is *assert.Is) {
 				panicFunc := func() { panic("i'm panic") }
 				is.Panic(panicFunc, "i'm panic", "is this panic")
-			},
-		},
-		{
-			Name:  "panic with false panic value",
-			State: fail,
-			Msg:   prefix + `i'm panic != are you panic`,
-			F: func(is *assert.Is) {
+			}},
+		{"panic with false panic value", fail, prefix + `i'm panic != are you panic`,
+			func(is *assert.Is) {
 				panicFunc := func() { panic("i'm panic") }
 				is.Panic(panicFunc, "are you panic")
-			},
-		},
-		{
-			Name:  "panic with multiple false panic value",
-			State: fail,
-			Msg:   prefix + `i'm panic != one of the expected panic values`,
-			F: func(is *assert.Is) {
+			}},
+		{"panic with multiple false panic value", fail, prefix + `i'm panic != one of the expected panic values`,
+			func(is *assert.Is) {
 				panicFunc := func() { panic("i'm panic") }
 				is.Panic(panicFunc, "are you panic", "are you crazy")
-			},
-		},
+			}},
 	}
 
 	for _, tt := range tests {
 		tt := tt
-		t.Run(tt.Name, func(t *testing.T) {
+		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			m := new(mockT)
 			is := is.New(m)
-			tt.F(is)
+			tt.f(is)
 
-			assertState(t, m.state, tt.State)
-			if m.msg != tt.Msg {
-				t.Errorf("%q != %q", m.msg, tt.Msg)
+			assertState(t, m.state, tt.state)
+			if m.msg != tt.msg {
+				t.Errorf("%q != %q", m.msg, tt.msg)
 			}
 		})
 	}
@@ -505,55 +279,31 @@ func TestPanic(t *testing.T) {
 
 func TestLine(t *testing.T) {
 	tests := []struct {
-		Name string
-		F    func(is *assert.Is)
-		Want int
+		name string
+		want int
+		f    func(is *assert.Is)
 	}{
-		{
-			Name: "Equal",
-			F:    func(is *assert.Is) { is.Equal(1, 2) },
-			Want: 2,
-		},
-		{
-			Name: "NoError",
-			F:    func(is *assert.Is) { is.NoError(errWrong) },
-			Want: 2,
-		},
-		{
-			Name: "Error",
-			F:    func(is *assert.Is) { is.Error(nil) },
-			Want: 2,
-		},
-		{
-			Name: "ErrorAs",
-			F: func(is *assert.Is) {
-				var queryError *QueryError
-				is.ErrorAs(errors.New("it's not query error"), &queryError)
-			},
-			Want: 2,
-		},
-		{
-			Name: "True",
-			F:    func(is *assert.Is) { is.True(1 == 2) },
-			Want: 2,
-		},
-		{
-			Name: "Panic",
-			F:    func(is *assert.Is) { is.Panic(func() {}) },
-			Want: 3,
-		},
+		{"Equal", 2, func(is *assert.Is) { is.Equal(1, 2) }},
+		{"NoError", 2, func(is *assert.Is) { is.NoError(errWrong) }},
+		{"Error", 2, func(is *assert.Is) { is.Error(nil) }},
+		{"ErrorAs", 2, func(is *assert.Is) {
+			var e *QueryError
+			is.ErrorAs(errors.New("it's not query error"), &e)
+		}},
+		{"True", 2, func(is *assert.Is) { is.True(1 == 2) }},
+		{"Panic", 3, func(is *assert.Is) { is.Panic(func() {}) }},
 	}
 
 	for _, tt := range tests {
 		tt := tt
-		t.Run(tt.Name, func(t *testing.T) {
+		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			m := new(mockT)
 			is := is.New(m)
-			tt.F(is)
+			tt.f(is)
 
-			if m.helperCount != tt.Want {
-				t.Errorf("%d != %d", m.helperCount, tt.Want)
+			if m.helperCount != tt.want {
+				t.Errorf("%d != %d", m.helperCount, tt.want)
 			}
 		})
 	}
@@ -561,8 +311,8 @@ func TestLine(t *testing.T) {
 
 func TestHelperPanic(t *testing.T) {
 	tests := []struct {
-		Name string
-		F    func()
+		name string
+		f    func()
 	}{
 		{"is.Equal panic", func() { is.Equal(1, 1) }},
 		{"is.NoError panic", func() { is.NoError(nil) }},
@@ -574,7 +324,7 @@ func TestHelperPanic(t *testing.T) {
 
 	for _, tt := range tests {
 		tt := tt
-		t.Run(tt.Name, func(t *testing.T) {
+		t.Run(tt.name, func(t *testing.T) {
 			defer func() {
 				errMsg := "is: T is nil"
 				if err := recover(); err != errMsg {
@@ -582,7 +332,7 @@ func TestHelperPanic(t *testing.T) {
 				}
 			}()
 
-			tt.F()
+			tt.f()
 		})
 	}
 }
