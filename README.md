@@ -1,4 +1,4 @@
-# is [![GoDoc](https://godoc.org/github.com/billyzaelani/is?status.png)](http://godoc.org/github.com/billyzaelani/is) [![Go Report Card](https://goreportcard.com/badge/github.com/billyzaelani/is)](https://goreportcard.com/report/github.com/billyzaelani/is) [![Build Status](https://travis-ci.org/billyzaelani/is.svg?branch=master)](https://travis-ci.org/billyzaelani/is) [![codecov](https://codecov.io/gh/billyzaelani/is/branch/master/graph/badge.svg)](https://codecov.io/gh/billyzaelani/is)
+# is [![GoDoc](https://godoc.org/github.com/billyzaelani/is?status.png)](http://godoc.org/github.com/billyzaelani/is) [![Go Report Card](https://goreportcard.com/badge/github.com/billyzaelani/is)](https://goreportcard.com/report/github.com/billyzaelani/is) [![Build Status](https://travis-ci.com/billyzaelani/is.svg?branch=master)](https://travis-ci.com/billyzaelani/is) [![codecov](https://codecov.io/gh/billyzaelani/is/branch/master/graph/badge.svg)](https://codecov.io/gh/billyzaelani/is)
 
 Package is provides helper function for comparing expected values to actual values.
 
