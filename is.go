@@ -70,7 +70,7 @@ import (
 
 // Is is the test helper.
 type Is struct {
-	t         T
+	T
 	comments  map[string]map[int]string
 	arguments map[string]map[int]string
 }
@@ -78,7 +78,7 @@ type Is struct {
 // New makes a new test helper given by T and load necessary buffer from test file.
 // Any failures will reported onto T. Most of the time T will be testing.T from the stdlib.
 func New(t T) *Is {
-	is := &Is{t: t}
+	is := &Is{T: t}
 	is.load()
 	return is
 }
@@ -99,7 +99,7 @@ New creates new test helper with the new T but reuse the buffer file for faster 
 */
 func (is *Is) New(t T) *Is {
 	return &Is{
-		t:         t,
+		T:         t,
 		comments:  is.comments,
 		arguments: is.arguments,
 	}
@@ -120,11 +120,11 @@ Will output:
 		is.Equal: string(hello girl) != bool(false) // seduce a girl
 */
 func (is *Is) Equal(a, b interface{}) {
-	if is.t == nil {
+	if is.T == nil {
 		panic("is: T is nil")
 	}
 
-	is.t.Helper()
+	is.Helper()
 	prefix := "is.Equal"
 	skip := 3
 
@@ -133,16 +133,16 @@ func (is *Is) Equal(a, b interface{}) {
 	}
 
 	if isNil(a) || isNil(b) {
-		is.logf(is.t.Fail, skip, "%s: %s != %s", prefix, valWithType(a), valWithType(b))
+		is.logf(is.T.Fail, skip, "%s: %s != %s", prefix, valWithType(a), valWithType(b))
 		return
 	}
 
 	if reflect.ValueOf(a).Type() == reflect.ValueOf(b).Type() {
-		is.logf(is.t.Fail, skip, "%s: %v != %v", prefix, a, b)
+		is.logf(is.Fail, skip, "%s: %v != %v", prefix, a, b)
 		return
 	}
 
-	is.logf(is.t.Fail, skip, "%s: %s != %s", prefix, valWithType(a), valWithType(b))
+	is.logf(is.Fail, skip, "%s: %s != %s", prefix, valWithType(a), valWithType(b))
 }
 
 /*
@@ -162,16 +162,16 @@ Will output:
 		is.Error: get a girlfriend as programmer? != coding // its not easy
 */
 func (is *Is) Error(err error, expectedErrors ...error) {
-	if is.t == nil {
+	if is.T == nil {
 		panic("is: T is nil")
 	}
 
-	is.t.Helper()
+	is.Helper()
 	prefix := "is.Error"
 	skip := 3
 
 	if err == nil {
-		is.logf(is.t.FailNow, skip, "%s: <nil>", prefix)
+		is.logf(is.FailNow, skip, "%s: <nil>", prefix)
 		return
 	}
 
@@ -188,11 +188,11 @@ func (is *Is) Error(err error, expectedErrors ...error) {
 	}
 
 	if lenErr == 1 {
-		is.logf(is.t.FailNow, skip, "%s: %s != %s", prefix, err.Error(), expectedErrors[0].Error())
+		is.logf(is.FailNow, skip, "%s: %s != %s", prefix, err.Error(), expectedErrors[0].Error())
 		return
 	}
 
-	is.logf(is.t.FailNow, skip, "%s: %s != one of the expected errors", prefix, err.Error())
+	is.logf(is.FailNow, skip, "%s: %s != one of the expected errors", prefix, err.Error())
 }
 
 /*
@@ -211,16 +211,16 @@ Will output:
 		is.ErrorAs: err != **os.PathError // where should I go?
 */
 func (is *Is) ErrorAs(err error, target interface{}) {
-	if is.t == nil {
+	if is.T == nil {
 		panic("is: T is nil")
 	}
 
-	is.t.Helper()
+	is.Helper()
 	prefix := "is.ErrorAs"
 	skip := 3
 
 	if !errors.As(err, target) {
-		is.logf(is.t.FailNow, skip, "%s: err != %T", prefix, target)
+		is.logf(is.FailNow, skip, "%s: err != %T", prefix, target)
 		return
 	}
 }
@@ -240,16 +240,16 @@ Will output:
 		is.NoError: girlfriend not found // i give up
 */
 func (is *Is) NoError(err error) {
-	if is.t == nil {
+	if is.T == nil {
 		panic("is: T is nil")
 	}
 
-	is.t.Helper()
+	is.Helper()
 	prefix := "is.NoError"
 	skip := 3
 
 	if err != nil {
-		is.logf(is.t.FailNow, skip, "%s: %s", prefix, err.Error())
+		is.logf(is.FailNow, skip, "%s: %s", prefix, err.Error())
 	}
 }
 
@@ -268,11 +268,11 @@ Will output:
 		is.True: money != 0 // money shouldn't be 0 to get a girl
 */
 func (is *Is) True(expression bool) {
-	if is.t == nil {
+	if is.T == nil {
 		panic("is: T is nil")
 	}
 
-	is.t.Helper()
+	is.Helper()
 	prefix := "is.True"
 	skip := 3
 
@@ -281,7 +281,7 @@ func (is *Is) True(expression bool) {
 	}
 
 	args := is.loadArgument()
-	is.logf(is.t.Fail, skip, "%s: %s", prefix, args)
+	is.logf(is.Fail, skip, "%s: %s", prefix, args)
 }
 
 /*
@@ -298,20 +298,20 @@ Will output:
 		is.Panic: single != one of the expected panic values // ok
 */
 func (is *Is) Panic(f PanicFunc, expectedValues ...interface{}) {
-	if is.t == nil {
+	if is.T == nil {
 		panic("is: T is nil")
 	}
 
-	is.t.Helper()
+	is.Helper()
 
 	defer func(expectedValues ...interface{}) {
-		is.t.Helper()
+		is.Helper()
 		prefix := "is.Panic"
 		skip := 4
 
 		r := recover()
 		if r == nil {
-			is.logf(is.t.Fail, skip, "%s: the function is not panic", prefix)
+			is.logf(is.Fail, skip, "%s: the function is not panic", prefix)
 			return
 		}
 
@@ -328,11 +328,11 @@ func (is *Is) Panic(f PanicFunc, expectedValues ...interface{}) {
 		}
 
 		if lenVal == 1 {
-			is.logf(is.t.Fail, skip, "%s: %v != %v", prefix, r, expectedValues[0])
+			is.logf(is.Fail, skip, "%s: %v != %v", prefix, r, expectedValues[0])
 			return
 		}
 
-		is.logf(is.t.Fail, skip, "%s: %v != one of the expected panic values", prefix, r)
+		is.logf(is.Fail, skip, "%s: %v != one of the expected panic values", prefix, r)
 	}(expectedValues...)
 
 	f()

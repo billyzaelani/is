@@ -336,3 +336,27 @@ func TestHelperPanic(t *testing.T) {
 		})
 	}
 }
+
+func TestExportedField(t *testing.T) {
+	t.Run("Fail", func(t *testing.T) {
+		m := new(mockT)
+		assert.New(m).Fail()
+		if m.state != fail {
+			t.Errorf("%q != %q", m.state, fail)
+		}
+	})
+	t.Run("FailNow", func(t *testing.T) {
+		m := new(mockT)
+		assert.New(m).FailNow()
+		if m.state != failNow {
+			t.Errorf("%q != %q", m.state, fail)
+		}
+	})
+	t.Run("Helper", func(t *testing.T) {
+		m := new(mockT)
+		assert.New(m).Helper()
+		if m.helperCount != 1 {
+			t.Errorf("%q != %d", m.helperCount, 1)
+		}
+	})
+}

@@ -73,13 +73,13 @@ func loadArgument(path, funcName string) map[int]string {
 // logf report the fail depends on failFunc, either t.Fail or t.FailNow.
 // skip is how deep the function call to reach the actual test.
 func (is *Is) logf(failFunc func(), skip int, format string, args ...interface{}) {
-	is.t.Helper()
+	is.Helper()
 
 	msg := []string{fmt.Sprintf(format, args...)}
 	if comment := is.loadComment(skip); comment != "" {
 		msg = append(msg, comment)
 	}
-	is.t.Log(strings.Join(msg, " "))
+	is.Log(strings.Join(msg, " "))
 	failFunc()
 }
 
