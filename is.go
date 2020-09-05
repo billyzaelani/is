@@ -32,11 +32,8 @@ The example below shows some useful ways to use package is in your test:
 			"strconv"
 			"testing"
 
-			assert "github.com/billyzaelani/is"
+			"github.com/billyzaelani/is" // neccesary test file will loaded once import the package
 		)
-
-		// load test file upfront
-		var is = assert.New(nil)
 
 		func TestIs(t *testing.T) {
 			// always start tests with this
@@ -68,30 +65,37 @@ import (
 	"reflect"
 )
 
+func init() {
+	loadTestFile()
+}
+
+var (
+	comments  map[string]map[int]string
+	arguments map[string]map[int]string
+)
+
 // Is is the test helper.
 type Is struct {
 	T
-	comments  map[string]map[int]string
-	arguments map[string]map[int]string
 }
 
-// New makes a new test helper given by T and load necessary buffer from test file.
-// Any failures will reported onto T. Most of the time T will be testing.T from the stdlib.
+// New makes a new test helper given by T. Any failures will reported onto T.
+// Most of the time T will be testing.T from the stdlib.
 func New(t T) *Is {
 	is := &Is{T: t}
-	is.load()
 	return is
 }
 
 /*
-New creates new test helper with the new T but reuse the buffer file for faster test.
+New creates new test helper with the new T.
+(In v1.4.1 or later, this function is no different with the New function in package level)
 
 		func TestNew(t *testing.T) {
-			is := is.New(t) // this will load the test file once
+			is := is.New(t)
 
 			for i := 0; i < 5; i++ {
 				t.Run("test"+i, func(t *testing.T) {
-					is := is.New(t) // this will reuse the buffer from previous helper creation
+					is := is.New(t)
 					is.True(true)
 				})
 			}
@@ -99,9 +103,7 @@ New creates new test helper with the new T but reuse the buffer file for faster 
 */
 func (is *Is) New(t T) *Is {
 	return &Is{
-		T:         t,
-		comments:  is.comments,
-		arguments: is.arguments,
+		T: t,
 	}
 }
 

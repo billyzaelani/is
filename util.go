@@ -12,19 +12,22 @@ import (
 	"strings"
 )
 
-func (is *Is) load() {
-	is.comments = make(map[string]map[int]string)
-	is.arguments = make(map[string]map[int]string)
-	_, file, _, _ := runtime.Caller(2)
-	root := filepath.Dir(file)
+func loadTestFile() {
+	comments = make(map[string]map[int]string)
+	arguments = make(map[string]map[int]string)
+	root, err := os.Getwd()
+	if err != nil {
+		panic(err)
+	}
+
 	walkTest := func(path string, info os.FileInfo, err error) error {
 		if info.IsDir() && path != root {
 			return filepath.SkipDir
 		}
 
 		if strings.HasSuffix(info.Name(), "_test.go") {
-			is.comments[path] = loadComment(path)
-			is.arguments[path] = loadArgument(path, "True")
+			comments[path] = loadComment(path)
+			arguments[path] = loadArgument(path, "True")
 		}
 
 		return nil
@@ -99,10 +102,10 @@ func isNil(obj interface{}) bool {
 
 func (is *Is) loadComment(skip int) string {
 	_, file, line, _ := runtime.Caller(skip) // level of function call to the actual test
-	return is.comments[file][line]
+	return comments[file][line]
 }
 
 func (is *Is) loadArgument() string {
 	_, file, line, _ := runtime.Caller(2) // level of function call to the actual test
-	return is.arguments[file][line]
+	return arguments[file][line]
 }
